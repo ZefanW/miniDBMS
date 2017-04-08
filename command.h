@@ -1,6 +1,8 @@
+#pragma once
 #include "structure.h"
 #define MAX_ID_LENGTH 256
 
+/*
 typedef enum FUNC_MODE {
 	SUM, COUNT, NOR
 }MODE;
@@ -22,6 +24,7 @@ public:
 	int table_index;
 	int attr_index;
 };
+*/
 
 class Insert_Command {
 public:
@@ -133,8 +136,18 @@ public:
 		tablename.reserve(2);
 		attr.reserve(11);
 	}
+	void Collapse()
+	{
+		tablename.clear();
+		is_all = false;
+		func_mode = NOR;
+		attr.clear();
+		condt.exp_num = 0;
+		return;
+	}
 };
 
+/*
 class Element {
 public:
 	bool is_imme;
@@ -163,3 +176,4 @@ public:
 
 	Condition() {};
 };
+*/

@@ -1,4 +1,4 @@
-
+#pragma once
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,6 +10,28 @@ using namespace std;
 typedef enum VAR_TYPE {
 	_INT, VARCHAR, _NULL
 }TYPE;
+
+typedef enum FUNC_MODE {
+	SUM, COUNT, NOR
+}MODE;
+
+typedef enum CALCULATOR {
+	GRE, LESS, EQU, NEQ
+}OP;
+
+typedef enum LOGIC_RELATION {
+	_AND, _OR
+}LOGIC;
+
+class select_attr {
+public:
+	string attr_name;
+	bool alias;
+	string tablename;
+
+	int table_index;
+	int attr_index;
+};
 
 class Value {
 public:
@@ -83,4 +105,32 @@ public:
 	}
 };
 
+class Element {
+public:
+	bool is_imme;
+	// imme 有可能是数字，也有可能是字符串, 用string来表示，如果是整数类型，换成数字来做
+	string imme;
+	// 不是立即数则是一个Attr， 而且这个Attr不一定出现在select后面，要从表中找
+	select_attr attr;
+
+	Element() {};
+};
+
+class Expression {
+public:
+	Element elem1;
+	Element elem2;
+	OP op;
+	Expression() {};
+};
+
+class Condition {
+public:
+	int exp_num;
+	Expression exp1;
+	Expression exp2;
+	LOGIC logic;
+
+	Condition() {};
+};
 
