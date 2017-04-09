@@ -8,6 +8,7 @@ DBMS dbms;
 #define isatty _isatty
 #define fileno _fileno
 #include "lex.yy.c"
+using namespace std;
 /*
 bool checkValid(string &s)
 {
@@ -108,38 +109,50 @@ int main()
 	cout << "Stage2 of Project1" << endl;
 	cout << "Input command lines below to utilize the DBMS" << endl;
 	cout << "Notice: input files is recommended because it will be faster." << endl;
-	cout << "input [filename]	:input a sql file and process it" << endl;
-	cout << "[single sql command]	:input a single sql line and process it if a correct query is found" << endl;
-	cout << "exit			:terminate the DBMS" << endl;
+	cout << "To input a (.sql)file:	input [filename]" << endl;
+	cout << "To input sql lines:	raw\n			[sql codes]\n			end\n" << endl;
+	cout << "To terminate the program:	exit" << endl;
 	string command;
 	char type[256] = {};
-	string inputfile;
+	char inputfile[256] = {};
 	while (true)
 	{
+		//do { getline(cin, command); } while (command.size() == 0 || command[0] == '\n' || command[0] == '\r');
 		getline(cin, command);
-		cout << command.length() << endl;
-		cout << command.c_str() << endl;
+		//cout << command.length() << endl;
+		//cout << command.c_str() << endl;
 		sscanf(command.c_str(), "%s", type);
 		string types = type;
 		if (types.compare("input") == 0)
 		{
-			sscanf(command.c_str(), "%s%s", type, inputfile);
-			strcpy(CurFile, inputfile.c_str());
+			sscanf(command.c_str(), "%s %s", type, inputfile);
+			strcpy(CurFile, inputfile);
 			filenum += 1;
 			streambuf *cinbuf = cin.rdbuf();
-			ifstream in(inputfile);
-			cin.rdbuf(in.rdbuf());
+			FILE *p=freopen(inputfile, "r", stdin);
 			lex();
-			cin.rdbuf(cinbuf);
+			dbms.tables[0].print_table();
+			dbms.tables[1].print_table();
+			fclose(p);
+			//cin.clear();
+			//cin.rdbuf(cinbuf);
+			freopen("con", "r", stdin);
+			memset(type, 0, sizeof(type));
+			memset(inputfile, 0, sizeof(inputfile));
 		}
-		else if (types.compare("exit") == 0)return 0;
-		else
+		else if (types.compare("exit") == 0)
 		{
-			stringstream ss(command);
-			streambuf *cinbuf = cin.rdbuf();
-			cin.rdbuf(ss.rdbuf());
+			dbms.tables[0].print_table();
+			dbms.tables[1].print_table();
+			return 0;
+		}
+		else if(types.compare("raw")==0)
+		{
+			//stringstream ss(command);
+			//streambuf *cinbuf = cin.rdbuf();
+			//cin.rdbuf(ss.rdbuf());
 			lex();
-			cin.rdbuf(cinbuf);
+			//cin.rdbuf(cinbuf);
 		}
 	}
 }

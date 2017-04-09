@@ -55,7 +55,7 @@ public:
 		char type[20];
 		TYPE t = _NULL;
 		string v;
-		sscanf(s.c_str(), "%s", type);
+		/*sscanf(s.c_str(), "%s", type);
 		if (strcmp(type, "int") == 0)
 		{
 			t = _INT;
@@ -64,7 +64,7 @@ public:
 		{
 			t = VARCHAR;
 		}
-		v = s.substr(4);
+		v = s.substr(4);*/
 		Value temp(t, v);
 		insert_values.push_back(temp);
 		return;
@@ -80,11 +80,11 @@ public:
 	}
 	void Set_Name(string &s)
 	{
-		if (s.find(" ") != s.length() - 1)
+		/*if (s.find(" ") != s.length() - 1)
 		{
 			printf("Parser error\n");
 			return;
-		}
+		}*/
 		char temp[MAX_ID_LENGTH];
 		sscanf(s.c_str(),"%s", temp);
 		tablename = temp;
