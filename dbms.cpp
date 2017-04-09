@@ -188,9 +188,15 @@ void DBMS::Select(Select_Command select)
 					// 每个表达式的第一个元素应该为attr， 第二个元素才可以是立即数
 					if (!select.condt.exp1.elem2.is_imme) { //第二个元素不是立即数,得到attindex，开始比较
 						int elem2_index = select.condt.exp1.elem2.attr.attr_index;
+						int elem1_index = select.condt.exp1.elem1.attr.attr_index;
+						//检查两个attr的type是否一致
+						if (temp.values[elem1_index].type != temp.values[elem2_index].type) {
+							cout << "Type mismatch, cannot compare.\n";
+							return;
+						}
 						if (temp.values[elem2_index].type == _INT) {
 							int elem1_val, elem2_val;
-							elem1_val = atoi(temp.values[select.condt.exp1.elem1.attr.attr_index].val.c_str());
+							elem1_val = atoi(temp.values[elem1_index].val.c_str());
 							elem2_val = atoi(temp.values[elem2_index].val.c_str());
 							switch (select.condt.exp1.op)
 							{
@@ -236,6 +242,11 @@ void DBMS::Select(Select_Command select)
 					}
 					else { // 第二个元素是立即数
 						int elem1_index = select.condt.exp1.elem1.attr.attr_index;
+						//检查立即数类型和attr类型是否一致
+						if (temp.values[elem1_index].type != select.condt.exp1.elem2.imme_type) {
+							cout << "Type mismatch, cannot compare.\n";
+							return;
+						}
 						if (temp.values[elem1_index].type == _INT) {
 							int elem1_val = atoi(temp.values[elem1_index].val.c_str());
 							int elem2_val = atoi(select.condt.exp1.elem2.imme.c_str());
@@ -287,10 +298,16 @@ void DBMS::Select(Select_Command select)
 					else if (select.condt.exp_num == 2) {
 						bool check2 = false;
 						if (!select.condt.exp2.elem2.is_imme) { //第二个元素不是立即数，开始比较
+							int elem1_index = select.condt.exp2.elem1.attr.attr_index;
 							int elem2_index = select.condt.exp2.elem2.attr.attr_index;
+							//检查两个attr的type是否一致
+							if (temp.values[elem1_index].type != temp.values[elem2_index].type) {
+								cout << "Type mismatch, cannot compare.\n";
+								return;
+							}
 							if (temp.values[elem2_index].type == _INT) {
 								int elem1_val, elem2_val;
-								elem1_val = atoi(temp.values[select.condt.exp2.elem1.attr.attr_index].val.c_str());
+								elem1_val = atoi(temp.values[elem1_index].val.c_str());
 								elem2_val = atoi(temp.values[elem2_index].val.c_str());
 								switch (select.condt.exp2.op)
 								{
@@ -336,6 +353,10 @@ void DBMS::Select(Select_Command select)
 						}
 						else { // 第二个元素是立即数
 							int elem1_index = select.condt.exp2.elem1.attr.attr_index;
+							if (temp.values[elem1_index].type != select.condt.exp2.elem2.imme_type) {
+								cout << "Type mismatch, cannot compare.\n";
+								return;
+							}
 							if (temp.values[elem1_index].type == _INT) {
 								int elem1_val = atoi(temp.values[elem1_index].val.c_str());
 								int elem2_val = atoi(select.condt.exp2.elem2.imme.c_str());
@@ -441,15 +462,24 @@ void DBMS::Select(Select_Command select)
 		int attr_size = select.attr.size();
 		// 构建好每个attr的属性
 		for (int i = 0; i < attr_size; i++) {
+			//没有别名的情况
 			if (!select.attr[i].alias) {
-				int index = get_attr_index(select.attr[i].attr_name, index1); // 假设在table1中
+				// 假设在table1中
+				int index = get_attr_index(select.attr[i].attr_name, index1);
+				int index_2 = get_attr_index(select.attr[i].attr_name, index2);
+				// 如果在两个表中都找到了这个attr
+				if (index >= 0 && index_2 >= 0) {
+					cout << "Ambigious attribute.\n";
+					return;
+				}
 				if (index < 0) {
-					select.attr[i].table_index = index2; select.attr[i].attr_index = get_attr_index(select.attr[i].attr_name, index2);
+					select.attr[i].table_index = index2; select.attr[i].attr_index = index_2;
 				}
 				else {
 					select.attr[i].table_index = index1; select.attr[i].attr_index = index;
 				}
 			}
+			//有别名的情况
 			else {
 				select.attr[i].table_index = get_table_index(select.attr[i].tablename);
 				select.attr[i].attr_index = get_attr_index(select.attr[i].attr_name, select.attr[i].table_index);
@@ -460,9 +490,14 @@ void DBMS::Select(Select_Command select)
 			//构建第一个表达式的attr的属性
 			if (!select.condt.exp1.elem1.is_imme) {
 				if (!select.condt.exp1.elem1.attr.alias) {
-					int index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1); // 假设在table1中
+					int index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1); 
+					int index_2 = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index2);
+					if (index >= 0 && index_2 >= 0) {
+						cout << "Ambigious attribute.\n";
+						return;
+					}
 					if (index < 0) {
-						select.condt.exp1.elem1.attr.table_index = index2; select.condt.exp1.elem1.attr.attr_index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index2);
+						select.condt.exp1.elem1.attr.table_index = index2; select.condt.exp1.elem1.attr.attr_index = index_2;
 					}
 					else {
 						select.condt.exp1.elem1.attr.table_index = index1; select.condt.exp1.elem1.attr.attr_index = index;
@@ -476,9 +511,14 @@ void DBMS::Select(Select_Command select)
 			//第一个表达式的第二个元素
 			if (!select.condt.exp1.elem2.is_imme) {
 				if (!select.condt.exp1.elem2.attr.alias) {
-					int index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1); // 假设在table1中
+					int index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1); 
+					int index_2 = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index2);
+					if (index >= 0 && index_2 >= 0) {
+						cout << "Ambigious attribute.\n";
+						return;
+					}
 					if (index < 0) {
-						select.condt.exp1.elem2.attr.table_index = index2; select.condt.exp1.elem2.attr.attr_index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index2);
+						select.condt.exp1.elem2.attr.table_index = index2; select.condt.exp1.elem2.attr.attr_index = index_2;
 					}
 					else {
 						select.condt.exp1.elem2.attr.table_index = index1; select.condt.exp1.elem2.attr.attr_index = index;
@@ -493,9 +533,14 @@ void DBMS::Select(Select_Command select)
 				//构建第二个表达式的attr的属性
 				if (!select.condt.exp2.elem1.is_imme) {
 					if (!select.condt.exp2.elem1.attr.alias) {
-						int index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index1); // 假设在table1中
+						int index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index1); 
+						int index_2 = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index2);
+						if (index >= 0 && index_2 >= 0) {
+							cout << "Ambigious attribute.\n";
+							return;
+						}
 						if (index < 0) {
-							select.condt.exp2.elem1.attr.table_index = index2; select.condt.exp2.elem1.attr.attr_index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index2);
+							select.condt.exp2.elem1.attr.table_index = index2; select.condt.exp2.elem1.attr.attr_index = index_2;
 						}
 						else {
 							select.condt.exp2.elem1.attr.table_index = index1; select.condt.exp2.elem1.attr.attr_index = index;
@@ -509,9 +554,14 @@ void DBMS::Select(Select_Command select)
 				//第一个表达式的第二个元素
 				if (!select.condt.exp2.elem2.is_imme) {
 					if (!select.condt.exp2.elem2.attr.alias) {
-						int index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index1); // 假设在table1中
+						int index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index1); 
+						int index_2 = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index2);
+						if (index >= 0 && index_2 >= 0) {
+							cout << "Ambigious attribute.\n";
+							return;
+						}
 						if (index < 0) {
-							select.condt.exp2.elem2.attr.table_index = index2; select.condt.exp2.elem2.attr.attr_index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index2);
+							select.condt.exp2.elem2.attr.table_index = index2; select.condt.exp2.elem2.attr.attr_index = index_2;
 						}
 						else {
 							select.condt.exp2.elem2.attr.table_index = index1; select.condt.exp2.elem2.attr.attr_index = index;
@@ -546,6 +596,10 @@ void DBMS::Select(Select_Command select)
 						int elem2_index = select.condt.exp1.elem2.attr.attr_index;
 						int elem1_table = select.condt.exp1.elem1.attr.table_index;
 						int elem2_table = select.condt.exp1.elem2.attr.table_index;
+						if (tables[elem1_table].attr[elem1_index].type != tables[elem2_table].attr[elem2_index].type) {
+							cout << "Type mismatch, cannot compare.\n";
+							return;
+						}
 						if (tables[elem1_table].attr[elem1_index].type == _INT) {
 							int elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
 							int elem2_val = atoi(tables[elem2_table].tuples[t2].values[elem2_index].val.c_str());
@@ -594,6 +648,10 @@ void DBMS::Select(Select_Command select)
 					else { // 第二个元素是立即数，开始比较
 						int elem1_index = select.condt.exp1.elem1.attr.attr_index;
 						int elem1_table = select.condt.exp1.elem1.attr.table_index;
+						if (tables[elem1_table].attr[elem1_index].type != select.condt.exp1.elem2.imme_type) {
+							cout << "Type mismatch, cannot compare.\n";
+							return;
+						}
 						if (tables[elem1_table].attr[elem1_index].type == _INT) {
 							int elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
 							int elem2_val = atoi(select.condt.exp1.elem2.imme.c_str());
@@ -658,6 +716,10 @@ void DBMS::Select(Select_Command select)
 							int elem2_index = select.condt.exp2.elem2.attr.attr_index;
 							int elem1_table = select.condt.exp2.elem1.attr.table_index;
 							int elem2_table = select.condt.exp2.elem2.attr.table_index;
+							if (tables[elem1_table].attr[elem1_index].type != tables[elem2_table].attr[elem2_index].type) {
+								cout << "Type mismatch, cannot compare.\n";
+								return;
+							}
 							if (tables[elem1_table].attr[elem1_index].type == _INT) {
 								int elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
 								int elem2_val = atoi(tables[elem2_table].tuples[t2].values[elem2_index].val.c_str());
@@ -706,6 +768,10 @@ void DBMS::Select(Select_Command select)
 						else { // 第二个元素是立即数，开始比较
 							int elem1_index = select.condt.exp2.elem1.attr.attr_index;
 							int elem1_table = select.condt.exp2.elem1.attr.table_index;
+							if (tables[elem1_table].attr[elem1_index].type != select.condt.exp2.elem2.imme_type) {
+								cout << "Type mismatch, cannot compare.\n";
+								return;
+							}
 							if (tables[elem1_table].attr[elem1_index].type == _INT) {
 								int elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
 								int elem2_val = atoi(select.condt.exp2.elem2.imme.c_str());
