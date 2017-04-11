@@ -112,7 +112,7 @@ public:
 	string imme;
 	// 不是立即数则是一个Attr， 而且这个Attr不一定出现在select后面，要从表中找
 	select_attr attr;
-
+	TYPE imme_type;
 	Element() {};
 };
 

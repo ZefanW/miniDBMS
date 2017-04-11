@@ -110,13 +110,30 @@ int main()
 	cout << "Input command lines below to utilize the DBMS" << endl;
 	cout << "Notice: input files is recommended because it will be faster." << endl;
 	cout << "To input a (.sql)file:	input [filename]" << endl;
-	cout << "To input sql lines:	raw\n			[sql codes]\n			end\n" << endl;
+	cout << "To input sql lines:	raw\n			[sql codes]\n			ctrl+Z\n" << endl;
 	cout << "To terminate the program:	exit" << endl;
 	string command;
 	char type[256] = {};
 	char inputfile[256] = {};
+	FILE *p;
+	p = freopen("create.sql", "r", stdin);
+	lex();
+	fclose(p);
+	p = freopen("book2.sql", "r", stdin);
+	lex();
+	fclose(p);
+	p = freopen("author.sql", "r", stdin);
+	lex();
+	fclose(p);
+	p = freopen("select2.sql", "r", stdin);
+	lex();
+	fclose(p);
+	freopen("con", "r", stdin);
+	//dbms.tables[0].print_table();
+	//dbms.tables[1].print_table();
 	while (true)
 	{
+		
 		//do { getline(cin, command); } while (command.size() == 0 || command[0] == '\n' || command[0] == '\r');
 		getline(cin, command);
 		//cout << command.length() << endl;
@@ -128,11 +145,9 @@ int main()
 			sscanf(command.c_str(), "%s %s", type, inputfile);
 			strcpy(CurFile, inputfile);
 			filenum += 1;
-			streambuf *cinbuf = cin.rdbuf();
-			FILE *p=freopen(inputfile, "r", stdin);
+			//streambuf *cinbuf = cin.rdbuf();
+			p=freopen(inputfile, "r", stdin);
 			lex();
-			dbms.tables[0].print_table();
-			dbms.tables[1].print_table();
 			fclose(p);
 			//cin.clear();
 			//cin.rdbuf(cinbuf);
