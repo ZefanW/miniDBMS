@@ -49,7 +49,7 @@ varchartype	varchar{blank}*\({blank}*{interger}{blank}*\)
 create		[Cc][Rr][Ee][Aa][Tt][Ee]{blank}+[Tt][Aa][Bb][Ll][Ee]
 insert		[Ii][Nn][Ss][Ee][Rr][Tt]{blank}+[Ii][Nn][Tt][Oo]
 values		[Vv][Aa][Ll][Uu][Ee][Ss]
-quotestring	[\"\'][^,]*[\"\']
+quotestring	[\"\'][^,;]*[\"\']
 null		[Nn][Uu][Ll][Ll]
 select		[Ss][Ee][Ll][Ee][Cc][Tt]
 from		[Ff][Rr][Oo][Mm]
@@ -69,6 +69,7 @@ end			[Ee][Nn][Dd]
 %%
 {recour}			linenum+=1;
 {space}				;
+{end}				return 0;
 <INITIAL>{create}	{BEGIN CREATE;NewCreate();}
 <INITIAL>{insert}	{BEGIN INSERT;NewInsert();}
 <INITIAL>{select}	{BEGIN SELECT;NewSelect();}
@@ -174,10 +175,12 @@ end			[Ee][Nn][Dd]
 
 	/*	INSERT	*/
 <SELECT>{from}		{
+						//printf("get a from");
 						if(CurSta==_ATTRIBUTENAME)CurSta=_TABLENAME;
 						else PARSERERROR;
 					}
 <SELECT>{where}		{
+						//printf("get a where");
 						CurSta=_CONDITION;
 					}
 <SELECT>{or}		{
@@ -199,7 +202,7 @@ end			[Ee][Nn][Dd]
 							//无法预知from中的table有多少个。因此只能一视同仁地将*转化为全部attr加入selectorder.attr。
 							//建议以table数量作为是否转化的标准而不是函数是否存在。
 						{
-							for(int i=0;i<dbms.tables.size();i++)
+							/*for(int i=0;i<dbms.tables.size();i++)
 							{
 								for(int j=0;j<dbms.tables[i].attr.size();j++)
 								{
@@ -208,7 +211,7 @@ end			[Ee][Nn][Dd]
 									CurSA.alias=true;//Suppose it's true
 									selectorder.attr.push_back(CurSA);
 								}
-							}
+							}*/
 						}
 						
 					}
@@ -295,6 +298,30 @@ end			[Ee][Nn][Dd]
 						{
 							string temp=yytext;
 							selectorder.tablename.push_back(temp);
+							if(selectorder.tablename.size()>=2)
+							{
+								for(int i=0;i<selectorder.attr.size();i++)
+								{
+									if(selectorder.attr[i].attr_name.compare("*")==0)
+									{
+										for(int j=0;j<selectorder.tablename.size();j++)
+										{
+											if(selectorder.attr[i].tablename==selectorder.tablename[j])
+											{
+												int index=dbms.get_table_index(selectorder.tablename[j]);
+												selectorder.attr[i].attr_name=dbms.tables[index].attr[0].attr_name;
+												for(int k=1;k<dbms.tables[index].attr.size();k++)
+												{
+													CurSA.tablename=selectorder.tablename[j];
+													CurSA.attr_name=dbms.tables[index].attr[k].attr_name;
+													CurSA.alias=true;
+													selectorder.attr.push_back(CurSA);
+												}
+											}
+										}
+									}
+								}
+							}
 						}
 						else if(CurSta==_CONDITION)
 						{
@@ -336,6 +363,7 @@ end			[Ee][Nn][Dd]
 					}
 <SELECT>,			;
 <SELECT>;			{
+						//printf("get a semicolon");
 						if(error==true)
 						{
 							error=false;
@@ -356,6 +384,20 @@ end			[Ee][Nn][Dd]
 									Curexp.elem2=Curele;
 									selectorder.condt.exp1=Curexp;
 									selectorder.condt.exp_num=1;
+								}
+							}
+							if(selectorder.func_mode!=NOR&&selectorder.is_all==true)
+							{
+								for(int i=0;i<selectorder.tablename.size();i++)
+								{
+									int index=dbms.get_table_index(selectorder.tablename[i]);
+									for(int j=0;j<dbms.tables[index].attr.size();j++)
+									{
+										CurSA.attr_name=dbms.tables[index].attr[j].attr_name;
+										CurSA.alias=true;
+										CurSA.tablename=selectorder.tablename[i];
+										selectorder.attr.push_back(CurSA);
+									}
 								}
 							}
 							BEGIN INITIAL;
@@ -397,6 +439,7 @@ void NewInsert()
 
 void NewSelect()
 {
+	//printf("get a select");
 	selectorder.Collapse();
 	CurQue=_SELECT;
 	CurSta=_ATTRIBUTENAME;

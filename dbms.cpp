@@ -16,20 +16,26 @@ int DBMS::get_table_index(string str)
 			break;
 		}
 	}
-	if (!found) return -1;
+	if (!found) {
+		cout << "Cannot find table: " << str << endl;
+		return -1;
+	}
 	return i;
 }
 
 int DBMS::get_attr_index(string str, int index)
 {
 	int i = 0; bool found = false;
+	//cout << str << "   " << index;
 	for (i = 0; i < tables[index].attr.size(); i++) {
 		if (str == tables[index].attr[i].attr_name) {
 			found = true;
 			break;
 		}
 	}
-	if (!found) return -1;
+	if (!found) {
+		cout << " Cannot find attr:" << str << endl; return -1;
+	}
 	return i;
 }
 
@@ -166,8 +172,8 @@ void DBMS::Select(Select_Command select)
 	for (int i = 0; i < select.attr.size(); i++)
 	{
 		cout << select.attr[i].attr_name << " " << select.attr[i].alias << " " << select.attr[i].tablename << endl;
-	}
-	cout << "CONDT:\n";
+	}*/
+	/*cout << "CONDT:\n";
 	cout << select.condt.exp_num << endl;
 	cout << select.condt.logic << endl;
 	cout << select.condt.exp1.op << endl;
@@ -176,7 +182,7 @@ void DBMS::Select(Select_Command select)
 	cout << select.condt.exp1.elem2.attr.attr_name << " " << select.condt.exp1.elem2.attr.alias << endl;
 	cout << select.condt.exp2.elem1.attr.attr_name << " " << select.condt.exp2.elem1.attr.alias << endl;
 	//test code1
-	/*if (select.condt.exp_num == 0)cout << "No Condition" << endl;
+	if (select.condt.exp_num == 0)cout << "No Condition" << endl;
 	else
 	{
 	cout << (select.condt.exp1.elem1.is_imme ? (select.condt.exp1.elem1.imme) : (select.condt.exp1.elem1.attr.attr_name));
@@ -188,8 +194,8 @@ void DBMS::Select(Select_Command select)
 	cout << select.condt.exp2.op;
 	cout << (select.condt.exp2.elem2.is_imme ? (select.condt.exp2.elem2.imme) : (select.condt.exp2.elem2.attr.attr_name));
 	}
-	}*/
-	cout << endl;
+	}
+	cout << endl;*/
 	//test code2
 	int index1 = -1, index2 = -1;
 	index1 = get_table_index(select.tablename[0]);
@@ -199,6 +205,7 @@ void DBMS::Select(Select_Command select)
 		int attr_size = select.attr.size();
 		for (int i = 0; i < attr_size; i++) {
 			select.attr[i].attr_index = get_attr_index(select.attr[i].attr_name, index1);
+			if (select.attr[i].attr_index < 0) { cout << "Cannot find attr: " << select.attr[i].attr_name << endl; return; }
 			select.attr[i].table_index = index1;
 		}
 		// construct valid_tuple
@@ -207,7 +214,7 @@ void DBMS::Select(Select_Command select)
 			if (!select.condt.exp1.elem1.is_imme) { //第一个元素不是立即数,得到attindex
 				select.condt.exp1.elem1.attr.attr_index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1);
 			}
-			if (!select.condt.exp2.elem2.is_imme) {//第二个元素不是立即数,得到attindex
+			if (!select.condt.exp1.elem2.is_imme) {//第二个元素不是立即数,得到attindex
 				select.condt.exp1.elem2.attr.attr_index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1);
 			}
 			if (select.condt.exp_num == 2) {
@@ -454,6 +461,7 @@ void DBMS::Select(Select_Command select)
 
 		// 只有一个表的时候，把所有的attr都放到valid_tuple中了
 		int tuple_num = valid_tuple.size();
+		cout << "Result: " << endl;
 		if (select.func_mode == NOR) {
 			if (select.is_all) {
 				int all_attr = tables[index1].attr.size();
@@ -510,7 +518,7 @@ void DBMS::Select(Select_Command select)
 				int index_2 = get_attr_index(select.attr[i].attr_name, index2);
 				// 如果在两个表中都找到了这个attr
 				if (index >= 0 && index_2 >= 0) {
-					cout << "Ambigious attribute.\n";
+					cout << "Ambigious attribute in select.\n";
 					return;
 				}
 				if (index < 0) {
@@ -534,7 +542,7 @@ void DBMS::Select(Select_Command select)
 					int index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1);
 					int index_2 = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index2);
 					if (index >= 0 && index_2 >= 0) {
-						cout << "Ambigious attribute.\n";
+						cout << "Ambigious attribute in where.\n";
 						return;
 					}
 					if (index < 0) {

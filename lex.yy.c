@@ -438,15 +438,15 @@ struct yy_trans_info
 static const flex_int16_t yy_accept[156] =
     {   0,
         0,    0,    0,    0,    0,    0,    0,    0,   40,   38,
-        3,    2,   38,   38,   38,   38,   10,   11,    9,   12,
+        2,    1,   38,   38,   38,   38,   10,   11,    9,   12,
         7,    7,    7,   38,   18,   19,   20,   38,   15,   15,
        21,   14,   14,   14,   14,   38,   38,   35,   26,   36,
        38,   33,   33,   37,   34,   34,   31,   31,   31,   31,
        31,   31,   31,   31,   38,    0,    0,    0,    0,    7,
         7,    7,    0,   16,   15,   15,   14,   14,   14,   14,
        34,    0,   32,   33,   33,    0,    0,   31,   31,   31,
-       31,   31,   24,   31,   31,    0,    1,    0,    0,    1,
-        7,    1,   14,   14,    0,   27,   27,   25,   31,    1,
+       31,   31,   24,   31,   31,    0,    3,    0,    0,    3,
+        7,    3,   14,   14,    0,   27,   27,   25,   31,    3,
 
        31,   31,   31,    0,    0,    0,    7,   13,   14,    0,
        27,   31,   22,   30,   31,    0,    0,    0,    7,   14,
@@ -491,7 +491,7 @@ static const YY_CHAR yy_ec[256] =
 static const YY_CHAR yy_meta[43] =
     {   0,
         1,    2,    2,    1,    1,    1,    1,    3,    4,    1,
-        5,    6,    6,    1,    1,    1,    1,    7,    7,    7,
+        5,    6,    6,    4,    1,    1,    1,    7,    7,    7,
         7,    7,    7,    7,    7,    7,    7,    7,    7,    7,
         7,    7,    7,    7,    7,    7,    1,    7,    7,    7,
         7,    7
@@ -988,20 +988,20 @@ do_action:	/* This label is used only to access EOF actions. */
 			goto yy_find_action;
 
 case 1:
+/* rule 1 can match eol */
 YY_RULE_SETUP
 #line 71 "scanner.l"
-return 0;
+linenum+=1;
 	YY_BREAK
 case 2:
-/* rule 2 can match eol */
 YY_RULE_SETUP
 #line 72 "scanner.l"
-linenum+=1;
+;
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
 #line 73 "scanner.l"
-;
+return 0;
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
@@ -1187,20 +1187,22 @@ case 22:
 YY_RULE_SETUP
 #line 178 "scanner.l"
 {
+						//printf("get a from");
 						if(CurSta==_ATTRIBUTENAME)CurSta=_TABLENAME;
 						else PARSERERROR;
 					}
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 182 "scanner.l"
+#line 183 "scanner.l"
 {
+						//printf("get a where");
 						CurSta=_CONDITION;
 					}
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 185 "scanner.l"
+#line 187 "scanner.l"
 {
 						selectorder.condt.exp_num=2;
 						selectorder.condt.logic=_OR;
@@ -1210,7 +1212,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 191 "scanner.l"
+#line 193 "scanner.l"
 {
 						selectorder.condt.exp_num=2;
 						selectorder.condt.logic=_AND;
@@ -1220,7 +1222,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 197 "scanner.l"
+#line 199 "scanner.l"
 {
 						if(CurSta==_ATTRIBUTENAME||CurSta==_FUNC)selectorder.is_all=true;
 						else PARSERERROR;
@@ -1228,7 +1230,7 @@ YY_RULE_SETUP
 							//无法预知from中的table有多少个。因此只能一视同仁地将*转化为全部attr加入selectorder.attr。
 							//建议以table数量作为是否转化的标准而不是函数是否存在。
 						{
-							for(int i=0;i<dbms.tables.size();i++)
+							/*for(int i=0;i<dbms.tables.size();i++)
 							{
 								for(int j=0;j<dbms.tables[i].attr.size();j++)
 								{
@@ -1237,14 +1239,14 @@ YY_RULE_SETUP
 									CurSA.alias=true;//Suppose it's true
 									selectorder.attr.push_back(CurSA);
 								}
-							}
+							}*/
 						}
 						
 					}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 217 "scanner.l"
+#line 219 "scanner.l"
 {
 						string temp=yytext;
 						int dotpos=temp.find('.');
@@ -1275,7 +1277,7 @@ YY_RULE_SETUP
 case 28:
 /* rule 28 can match eol */
 YY_RULE_SETUP
-#line 243 "scanner.l"
+#line 245 "scanner.l"
 {
 							char table[256]={};
 							char AL[256]={};
@@ -1309,7 +1311,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 273 "scanner.l"
+#line 275 "scanner.l"
 {
 						if(CurSta==_ATTRIBUTENAME)
 						{
@@ -1320,7 +1322,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 280 "scanner.l"
+#line 282 "scanner.l"
 {
 						if(CurSta==_ATTRIBUTENAME)
 						{
@@ -1331,7 +1333,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 287 "scanner.l"
+#line 289 "scanner.l"
 {
 						if(CurSta==_ATTRIBUTENAME||CurSta==_FUNC)
 						{
@@ -1345,6 +1347,30 @@ YY_RULE_SETUP
 						{
 							string temp=yytext;
 							selectorder.tablename.push_back(temp);
+							if(selectorder.tablename.size()>=2)
+							{
+								for(int i=0;i<selectorder.attr.size();i++)
+								{
+									if(selectorder.attr[i].attr_name.compare("*")==0)
+									{
+										for(int j=0;j<selectorder.tablename.size();j++)
+										{
+											if(selectorder.attr[i].tablename==selectorder.tablename[j])
+											{
+												int index=dbms.get_table_index(selectorder.tablename[j]);
+												selectorder.attr[i].attr_name=dbms.tables[index].attr[0].attr_name;
+												for(int k=1;k<dbms.tables[index].attr.size();k++)
+												{
+													CurSA.tablename=selectorder.tablename[j];
+													CurSA.attr_name=dbms.tables[index].attr[k].attr_name;
+													CurSA.alias=true;
+													selectorder.attr.push_back(CurSA);
+												}
+											}
+										}
+									}
+								}
+							}
 						}
 						else if(CurSta==_CONDITION)
 						{
@@ -1358,7 +1384,7 @@ YY_RULE_SETUP
 case 32:
 /* rule 32 can match eol */
 YY_RULE_SETUP
-#line 309 "scanner.l"
+#line 335 "scanner.l"
 {
 							if(CurSta==_CONDITION)
 							{
@@ -1371,7 +1397,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 318 "scanner.l"
+#line 344 "scanner.l"
 {
 						if(CurSta==_CONDITION)
 						{
@@ -1383,7 +1409,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 326 "scanner.l"
+#line 352 "scanner.l"
 {
 						Curexp.elem1=Curele;
 						if(strcmp(yytext,">")==0)Curexp.op=GRE;
@@ -1396,7 +1422,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 335 "scanner.l"
+#line 361 "scanner.l"
 {
 						if(CurSta==_FUNC)CurSta=_ATTRIBUTENAME;
 						else PARSERERROR;
@@ -1404,13 +1430,14 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 339 "scanner.l"
+#line 365 "scanner.l"
 ;
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 340 "scanner.l"
+#line 366 "scanner.l"
 {
+						//printf("get a semicolon");
 						if(error==true)
 						{
 							error=false;
@@ -1433,6 +1460,20 @@ YY_RULE_SETUP
 									selectorder.condt.exp_num=1;
 								}
 							}
+							if(selectorder.func_mode!=NOR&&selectorder.is_all==true)
+							{
+								for(int i=0;i<selectorder.tablename.size();i++)
+								{
+									int index=dbms.get_table_index(selectorder.tablename[i]);
+									for(int j=0;j<dbms.tables[index].attr.size();j++)
+									{
+										CurSA.attr_name=dbms.tables[index].attr[j].attr_name;
+										CurSA.alias=true;
+										CurSA.tablename=selectorder.tablename[i];
+										selectorder.attr.push_back(CurSA);
+									}
+								}
+							}
 							BEGIN INITIAL;
 							Oritablename.clear();
 							ALs.clear();
@@ -1442,15 +1483,15 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 369 "scanner.l"
+#line 410 "scanner.l"
 {PARSERERROR;}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 370 "scanner.l"
+#line 411 "scanner.l"
 ECHO;
 	YY_BREAK
-#line 1453 "lex.yy.c"
+#line 1494 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(CREATE):
 case YY_STATE_EOF(INSERT):
@@ -2454,7 +2495,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 370 "scanner.l"
+#line 411 "scanner.l"
 
 
 void catchCondition()
@@ -2487,6 +2528,7 @@ void NewInsert()
 
 void NewSelect()
 {
+	//printf("get a select");
 	selectorder.Collapse();
 	CurQue=_SELECT;
 	CurSta=_ATTRIBUTENAME;

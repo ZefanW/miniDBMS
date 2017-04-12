@@ -110,24 +110,24 @@ int main()
 	cout << "Input command lines below to utilize the DBMS" << endl;
 	cout << "Notice: input files is recommended because it will be faster." << endl;
 	cout << "To input a (.sql)file:	input [filename]" << endl;
-	cout << "To input sql lines:	raw\n			[sql codes]\n			ctrl+Z\n" << endl;
+	cout << "To input sql lines:	raw\n			[sql codes]\n			end [ctrl+Z]\n" << endl;
 	cout << "To terminate the program:	exit" << endl;
 	string command;
 	char type[256] = {};
 	char inputfile[256] = {};
 	FILE *p;
-	p = freopen("create.sql", "r", stdin);
+	/*p = freopen("tables.txt", "r", stdin);
 	lex();
 	fclose(p);
-	p = freopen("book2.sql", "r", stdin);
+	p = freopen("tweets.sql", "r", stdin);
 	lex();
 	fclose(p);
-	p = freopen("author.sql", "r", stdin);
+	p = freopen("user1.sql", "r", stdin);
 	lex();
-	fclose(p);
-	p = freopen("select2.sql", "r", stdin);
-	lex();
-	fclose(p);
+	fclose(p);*/
+	//p = freopen("select2.sql", "r", stdin);
+	//lex();
+	//fclose(p);
 	freopen("con", "r", stdin);
 	//dbms.tables[0].print_table();
 	//dbms.tables[1].print_table();
@@ -146,7 +146,14 @@ int main()
 			strcpy(CurFile, inputfile);
 			filenum += 1;
 			//streambuf *cinbuf = cin.rdbuf();
-			p=freopen(inputfile, "r", stdin);
+			if (!(p = freopen(inputfile, "r", stdin)))
+			{
+				cout << "Cannot open current file. " << endl;
+				freopen("con", "r", stdin);
+				memset(type, 0, sizeof(type));
+				memset(inputfile, 0, sizeof(inputfile));
+				continue;
+			}
 			lex();
 			fclose(p);
 			//cin.clear();
