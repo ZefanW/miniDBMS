@@ -56,7 +56,8 @@ void Table::load_data()
 		{
 			char temp[50];
 			fgets(temp, 45, p);
-			Value v(attr[j].type, temp);
+			string str = temp;
+			Value v(attr[j].type, str.substr(0,str.length() -1 ));
 			t.values.push_back(v);
 		}
 		tuples.push_back(t);
