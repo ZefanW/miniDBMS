@@ -16,20 +16,26 @@ int DBMS::get_table_index(string str)
 			break;
 		}
 	}
-	if (!found) return -1;
+	if (!found) {
+		cout << "Cannot find table: " << str << endl;
+		return -1;
+	}
 	return i;
 }
 
 int DBMS::get_attr_index(string str, int index)
 {
 	int i = 0; bool found = false;
+	//cout << str << "   " << index;
 	for (i = 0; i < tables[index].attr.size(); i++) {
 		if (str == tables[index].attr[i].attr_name) {
 			found = true;
 			break;
 		}
 	}
-	if (!found) return -1;
+	if (!found) {
+		cout << " Cannot find attr:" << str << endl; return -1;
+	}
 	return i;
 }
 
@@ -39,7 +45,7 @@ void DBMS::Insert(Insert_Command insert)
 {
 	Tuple in_tuple;
 	bool found = false; int k = 0;
-	for ( k = 0; k < tables.size(); k++) {
+	for (k = 0; k < tables.size(); k++) {
 		if (tables[k].table_name == insert.tablename) {
 			found = true;
 			break;
@@ -47,9 +53,9 @@ void DBMS::Insert(Insert_Command insert)
 	}
 	if (!found) {
 		cout << "Cannot find table by name: " << insert.tablename << endl;
-		return ;
+		return;
 	}
-	
+
 	//cout << "Current tuple num: " << t.tuples.size() << endl;
 	// check the insertion 
 	if (tables[k].attr.size() != insert.insert_values.size()) {
@@ -132,7 +138,7 @@ void DBMS::Insert(Insert_Command insert)
 				}
 			}
 			// for now, value is checked
-		   string str; Value empty(_NULL, str);
+			string str; Value empty(_NULL, str);
 			for (int n = 0; n < size; n++) in_tuple.values.push_back(empty);
 			in_tuple.values[j] = insert.insert_values[i];
 
@@ -143,7 +149,7 @@ void DBMS::Insert(Insert_Command insert)
 	//t.print_table();
 }
 
-void DBMS::Create(Create_Command create,Table &t)
+void DBMS::Create(Create_Command create, Table &t)
 {
 	// we assume that table name is always leagal
 	t.table_name = create.tablename;
@@ -156,39 +162,186 @@ void DBMS::Create(Create_Command create,Table &t)
 
 void DBMS::Select(Select_Command select)
 {
+	/*cout << "TABLE:\n";
+	for (int i = 0; i < select.tablename.size(); i++)
+	{
+		cout << select.tablename[i] << endl;
+	}
+	printf("%d %d", select.is_all, select.func_mode);
+	cout << "ATTR:\n";
+	for (int i = 0; i < select.attr.size(); i++)
+	{
+		cout << select.attr[i].attr_name << " " << select.attr[i].alias << " " << select.attr[i].tablename << endl;
+	}*/
+	/*cout << "CONDT:\n";
+	cout << select.condt.exp_num << endl;
+	cout << select.condt.logic << endl;
+	cout << select.condt.exp1.op << endl;
+	cout << select.condt.exp2.op << endl;
+	cout << select.condt.exp1.elem1.attr.attr_name << " " << select.condt.exp1.elem1.attr.alias << endl;
+	cout << select.condt.exp1.elem2.attr.attr_name << " " << select.condt.exp1.elem2.attr.alias << endl;
+	cout << select.condt.exp2.elem1.attr.attr_name << " " << select.condt.exp2.elem1.attr.alias << endl;
+	//test code1
+	if (select.condt.exp_num == 0)cout << "No Condition" << endl;
+	else
+	{
+	cout << (select.condt.exp1.elem1.is_imme ? (select.condt.exp1.elem1.imme) : (select.condt.exp1.elem1.attr.attr_name));
+	cout << select.condt.exp1.op;
+	cout << (select.condt.exp1.elem2.is_imme ? (select.condt.exp1.elem2.imme) : (select.condt.exp1.elem2.attr.attr_name));
+	if (select.condt.exp_num == 2)
+	{
+	cout << (select.condt.exp2.elem1.is_imme ? (select.condt.exp2.elem1.imme) : (select.condt.exp2.elem1.attr.attr_name));
+	cout << select.condt.exp2.op;
+	cout << (select.condt.exp2.elem2.is_imme ? (select.condt.exp2.elem2.imme) : (select.condt.exp2.elem2.attr.attr_name));
+	}
+	}
+	cout << endl;*/
+	//test code2
 	int index1 = -1, index2 = -1;
 	index1 = get_table_index(select.tablename[0]);
 	if (index1 < 0) { cout << "Cannot find table by name : " << select.tablename[0]; return; }
-	vector<Tuple> valid_tuple; valid_tuple.reserve(1000);
+	vector<Tuple> valid_tuple; valid_tuple.reserve(3000);
 	if (select.tablename.size() == 1) {
 		int attr_size = select.attr.size();
 		for (int i = 0; i < attr_size; i++) {
-				select.attr[i].attr_index = get_attr_index(select.attr[i].attr_name, index1);
-				select.attr[i].table_index = index1;
+			select.attr[i].attr_index = get_attr_index(select.attr[i].attr_name, index1);
+			if (select.attr[i].attr_index < 0) { cout << "Cannot find attr: " << select.attr[i].attr_name << endl; return; }
+			select.attr[i].table_index = index1;
 		}
 		// construct valid_tuple
-		if(select.condt.exp_num == 0)	valid_tuple = tables[index1].tuples;
+		if (select.condt.exp_num == 0)	valid_tuple = tables[index1].tuples;
 		else {
-				if (!select.condt.exp1.elem1.is_imme) { //第一个元素不是立即数,得到attindex
-					select.condt.exp1.elem1.attr.attr_index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1);
+			if (!select.condt.exp1.elem1.is_imme) { //第一个元素不是立即数,得到attindex
+				select.condt.exp1.elem1.attr.attr_index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1);
+			}
+			if (!select.condt.exp1.elem2.is_imme) {//第二个元素不是立即数,得到attindex
+				select.condt.exp1.elem2.attr.attr_index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1);
+			}
+			if (select.condt.exp_num == 2) {
+				if (!select.condt.exp2.elem1.is_imme) { //第一个元素不是立即数,得到attrindex
+					select.condt.exp2.elem1.attr.attr_index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index1);
 				}
-				if (!select.condt.exp2.elem2.is_imme) {//第二个元素不是立即数,得到attindex
-					select.condt.exp1.elem2.attr.attr_index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1);
+				if (!select.condt.exp2.elem2.is_imme) { //第二个元素不是立即数，得到attrindex
+					select.condt.exp2.elem2.attr.attr_index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index1);
 				}
-				if (select.condt.exp_num == 2) {
-					if (!select.condt.exp2.elem1.is_imme) { //第一个元素不是立即数,得到attrindex
-						select.condt.exp2.elem1.attr.attr_index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index1);
+			}
+			for (Tuple temp : tables[index1].tuples) {
+				bool check1 = false;
+				// 每个表达式的第一个元素应该为attr， 第二个元素才可以是立即数
+				if (!select.condt.exp1.elem2.is_imme) { //第二个元素不是立即数,得到attindex，开始比较
+					int elem2_index = select.condt.exp1.elem2.attr.attr_index;
+					int elem1_index = select.condt.exp1.elem1.attr.attr_index;
+					//检查两个attr的type是否一致
+					if (temp.values[elem1_index].type != temp.values[elem2_index].type) {
+						cout << "Type mismatch, cannot compare.\n";
+						return;
 					}
-					if (!select.condt.exp2.elem2.is_imme) { //第二个元素不是立即数，得到attrindex
-						select.condt.exp2.elem2.attr.attr_index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index1);
+					if (temp.values[elem2_index].type == _INT) {
+						int elem1_val, elem2_val;
+						elem1_val = atoi(temp.values[elem1_index].val.c_str());
+						elem2_val = atoi(temp.values[elem2_index].val.c_str());
+						switch (select.condt.exp1.op)
+						{
+						case GRE: {
+							if (elem1_val > elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case LESS: {
+							if (elem1_val < elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case EQU: {
+							if (elem1_val == elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case NEQ: {
+							if (elem1_val != elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						}
+					}
+					else {
+						string elem1_val = temp.values[select.condt.exp1.elem1.attr.attr_index].val;
+						string elem2_val = temp.values[elem2_index].val;
+						switch (select.condt.exp1.op)
+						{
+						case EQU: {
+							if (elem1_val == elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case NEQ: {
+							if (elem1_val != elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						}
 					}
 				}
-				for (Tuple temp : tables[index1].tuples) {
-					bool check1 = false;
-					// 每个表达式的第一个元素应该为attr， 第二个元素才可以是立即数
-					if (!select.condt.exp1.elem2.is_imme) { //第二个元素不是立即数,得到attindex，开始比较
-						int elem2_index = select.condt.exp1.elem2.attr.attr_index;
-						int elem1_index = select.condt.exp1.elem1.attr.attr_index;
+				else { // 第二个元素是立即数
+					int elem1_index = select.condt.exp1.elem1.attr.attr_index;
+					//检查立即数类型和attr类型是否一致
+					if (temp.values[elem1_index].type != select.condt.exp1.elem2.imme_type) {
+						cout << "Type mismatch, cannot compare.\n";
+						return;
+					}
+					if (temp.values[elem1_index].type == _INT) {
+						int elem1_val = atoi(temp.values[elem1_index].val.c_str());
+						int elem2_val = atoi(select.condt.exp1.elem2.imme.c_str());
+						switch (select.condt.exp1.op)
+						{
+						case GRE: {
+							if (elem1_val > elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case LESS: {
+							if (elem1_val < elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case EQU: {
+							if (elem1_val == elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case NEQ: {
+							if (elem1_val != elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						}
+					}
+					else {
+						string elem1_val = temp.values[elem1_index].val;
+						string elem2_val = select.condt.exp1.elem2.imme;
+						switch (select.condt.exp1.op)
+						{
+						case EQU: {
+							if (elem1_val == elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case NEQ: {
+							if (elem1_val != elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						}
+					}
+				}
+				if (select.condt.exp_num == 1) {
+					if (check1) valid_tuple.push_back(temp);
+				}
+				else if (select.condt.exp_num == 2) {
+					bool check2 = false;
+					if (!select.condt.exp2.elem2.is_imme) { //第二个元素不是立即数，开始比较
+						int elem1_index = select.condt.exp2.elem1.attr.attr_index;
+						int elem2_index = select.condt.exp2.elem2.attr.attr_index;
 						//检查两个attr的type是否一致
 						if (temp.values[elem1_index].type != temp.values[elem2_index].type) {
 							cout << "Type mismatch, cannot compare.\n";
@@ -198,260 +351,156 @@ void DBMS::Select(Select_Command select)
 							int elem1_val, elem2_val;
 							elem1_val = atoi(temp.values[elem1_index].val.c_str());
 							elem2_val = atoi(temp.values[elem2_index].val.c_str());
-							switch (select.condt.exp1.op)
+							switch (select.condt.exp2.op)
 							{
 							case GRE: {
-								if (elem1_val > elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val > elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							case LESS: {
-								if (elem1_val < elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val < elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							case EQU: {
-								if (elem1_val == elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val == elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							case NEQ: {
-								if (elem1_val != elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val != elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							}
 						}
 						else {
-							string elem1_val = temp.values[select.condt.exp1.elem1.attr.attr_index].val;
+							string elem1_val = temp.values[select.condt.exp2.elem1.attr.attr_index].val;
 							string elem2_val = temp.values[elem2_index].val;
-							switch (select.condt.exp1.op)
+							switch (select.condt.exp2.op)
 							{
 							case EQU: {
-								if (elem1_val == elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val == elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							case NEQ: {
-								if (elem1_val != elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val != elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							}
 						}
 					}
 					else { // 第二个元素是立即数
-						int elem1_index = select.condt.exp1.elem1.attr.attr_index;
-						//检查立即数类型和attr类型是否一致
-						if (temp.values[elem1_index].type != select.condt.exp1.elem2.imme_type) {
+						int elem1_index = select.condt.exp2.elem1.attr.attr_index;
+						if (temp.values[elem1_index].type != select.condt.exp2.elem2.imme_type) {
 							cout << "Type mismatch, cannot compare.\n";
 							return;
 						}
 						if (temp.values[elem1_index].type == _INT) {
 							int elem1_val = atoi(temp.values[elem1_index].val.c_str());
-							int elem2_val = atoi(select.condt.exp1.elem2.imme.c_str());
-							switch (select.condt.exp1.op)
+							int elem2_val = atoi(select.condt.exp2.elem2.imme.c_str());
+							switch (select.condt.exp2.op)
 							{
 							case GRE: {
-								if (elem1_val > elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val > elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							case LESS: {
-								if (elem1_val < elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val < elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							case EQU: {
-								if (elem1_val == elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val == elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							case NEQ: {
-								if (elem1_val != elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val != elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							}
 						}
 						else {
 							string elem1_val = temp.values[elem1_index].val;
-							string elem2_val = select.condt.exp1.elem2.imme;
-							switch (select.condt.exp1.op)
+							string elem2_val = select.condt.exp2.elem2.imme;
+							switch (select.condt.exp2.op)
 							{
 							case EQU: {
-								if (elem1_val == elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val == elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							case NEQ: {
-								if (elem1_val != elem2_val) check1 = true;
-								else check1 = false;
+								if (elem1_val != elem2_val) check2 = true;
+								else check2 = false;
 								break;
 							}
 							}
 						}
 					}
-					if (select.condt.exp_num == 1) {
-						if (check1) valid_tuple.push_back(temp);
+					switch (select.condt.logic)
+					{
+					case _AND: {
+						if (check1 && check2) valid_tuple.push_back(temp);
+						break;
 					}
-					else if (select.condt.exp_num == 2) {
-						bool check2 = false;
-						if (!select.condt.exp2.elem2.is_imme) { //第二个元素不是立即数，开始比较
-							int elem1_index = select.condt.exp2.elem1.attr.attr_index;
-							int elem2_index = select.condt.exp2.elem2.attr.attr_index;
-							//检查两个attr的type是否一致
-							if (temp.values[elem1_index].type != temp.values[elem2_index].type) {
-								cout << "Type mismatch, cannot compare.\n";
-								return;
-							}
-							if (temp.values[elem2_index].type == _INT) {
-								int elem1_val, elem2_val;
-								elem1_val = atoi(temp.values[elem1_index].val.c_str());
-								elem2_val = atoi(temp.values[elem2_index].val.c_str());
-								switch (select.condt.exp2.op)
-								{
-								case GRE: {
-									if (elem1_val > elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								case LESS: {
-									if (elem1_val < elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								case EQU: {
-									if (elem1_val == elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								case NEQ: {
-									if (elem1_val != elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								}
-							}
-							else {
-								string elem1_val = temp.values[select.condt.exp2.elem1.attr.attr_index].val;
-								string elem2_val = temp.values[elem2_index].val;
-								switch (select.condt.exp2.op)
-								{
-								case EQU: {
-									if (elem1_val == elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								case NEQ: {
-									if (elem1_val != elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								}
-							}
-						}
-						else { // 第二个元素是立即数
-							int elem1_index = select.condt.exp2.elem1.attr.attr_index;
-							if (temp.values[elem1_index].type != select.condt.exp2.elem2.imme_type) {
-								cout << "Type mismatch, cannot compare.\n";
-								return;
-							}
-							if (temp.values[elem1_index].type == _INT) {
-								int elem1_val = atoi(temp.values[elem1_index].val.c_str());
-								int elem2_val = atoi(select.condt.exp2.elem2.imme.c_str());
-								switch (select.condt.exp2.op)
-								{
-								case GRE: {
-									if (elem1_val > elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								case LESS: {
-									if (elem1_val < elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								case EQU: {
-									if (elem1_val == elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								case NEQ: {
-									if (elem1_val != elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								}
-							}
-							else {
-								string elem1_val = temp.values[elem1_index].val;
-								string elem2_val = select.condt.exp2.elem2.imme;
-								switch (select.condt.exp2.op)
-								{
-								case EQU: {
-									if (elem1_val == elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								case NEQ: {
-									if (elem1_val != elem2_val) check2 = true;
-									else check2 = false;
-									break;
-								}
-								}
-							}
-						}
-						switch (select.condt.logic)
-						{
-						case _AND: {
-							if (check1 && check2) valid_tuple.push_back(temp);
-							break;
-						}
-						case _OR: {
-							if (check1 || check2) valid_tuple.push_back(temp);
-							break;
-						}
-						}
+					case _OR: {
+						if (check1 || check2) valid_tuple.push_back(temp);
+						break;
+					}
 					}
 				}
 			}
+		}
 
 		// 只有一个表的时候，把所有的attr都放到valid_tuple中了
 		int tuple_num = valid_tuple.size();
+		cout << "Result: " << endl;
 		if (select.func_mode == NOR) {
-				if (select.is_all) {
-					int all_attr = tables[index1].attr.size();
-					for (int i = 0; i < tuple_num; i++) {
-						for (int j = 0; j < all_attr; j++) {
-							cout << valid_tuple[i].values[j].val << "      ";
-						}
-						cout << endl;
-					}
-				}
-				else {
-					for (int i = 0; i < tuple_num; i++) {
-						for (int j = 0; j < attr_size; j++) {
-							cout << valid_tuple[i].values[select.attr[j].attr_index].val << "      ";
-						}
-						cout << endl;
-					}
-				}
-			}
-		else if (select.func_mode == COUNT) {
-				//still need to check NON_NULL
-				cout << valid_tuple.size() << endl;
-			}
-		else if (select.func_mode == SUM) {
-				if (attr_size != 1) { cout << "Attributes to sum > 1.\n"; return; }
-				int count_index = select.attr[0].attr_index;
-				if (valid_tuple[0].values[count_index].type != _INT) { cout << "NON_INT type cannot SUM.\n" << endl; return; }
-				int sum = 0;
+			if (select.is_all) {
+				int all_attr = tables[index1].attr.size();
+				for (int i = 0; i < all_attr; i++)
+					cout << setw(25) << tables[index1].attr[i].attr_name;
+				cout << endl;
 				for (int i = 0; i < tuple_num; i++) {
-					sum += atoi(valid_tuple[i].values[count_index].val.c_str());
+					for (int j = 0; j < all_attr; j++) {
+						cout << setw(25) << valid_tuple[i].values[j].val;
+					}
+					cout << endl;
 				}
-				cout << sum << endl;
 			}
+			else {
+				for (int i = 0; i < attr_size; i++)
+					cout << setw(25) << select.attr[i].attr_name;
+				cout << endl;
+				for (int i = 0; i < tuple_num; i++) {
+					for (int j = 0; j < attr_size; j++) {
+						cout << setw(25) << valid_tuple[i].values[select.attr[j].attr_index].val;
+					}
+					cout << endl;
+				}
+			}
+		}
+		else if (select.func_mode == COUNT) {
+			//still need to check NON_NULL
+			cout << valid_tuple.size() << endl;
+		}
+		else if (select.func_mode == SUM) {
+			if (attr_size != 1) { cout << "Attributes to sum > 1.\n"; return; }
+			int count_index = select.attr[0].attr_index;
+			if (valid_tuple[0].values[count_index].type != _INT) { cout << "NON_INT type cannot SUM.\n" << endl; return; }
+			int sum = 0;
+			for (int i = 0; i < tuple_num; i++) {
+				sum += atoi(valid_tuple[i].values[count_index].val.c_str());
+			}
+			cout << sum << endl;
+		}
 	}
 	else if (select.tablename.size() == 2) {
 		index2 = get_table_index(select.tablename[1]);
@@ -469,7 +518,7 @@ void DBMS::Select(Select_Command select)
 				int index_2 = get_attr_index(select.attr[i].attr_name, index2);
 				// 如果在两个表中都找到了这个attr
 				if (index >= 0 && index_2 >= 0) {
-					cout << "Ambigious attribute.\n";
+					cout << "Ambigious attribute in select.\n";
 					return;
 				}
 				if (index < 0) {
@@ -490,10 +539,10 @@ void DBMS::Select(Select_Command select)
 			//构建第一个表达式的attr的属性
 			if (!select.condt.exp1.elem1.is_imme) {
 				if (!select.condt.exp1.elem1.attr.alias) {
-					int index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1); 
+					int index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1);
 					int index_2 = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index2);
 					if (index >= 0 && index_2 >= 0) {
-						cout << "Ambigious attribute.\n";
+						cout << "Ambigious attribute in where.\n";
 						return;
 					}
 					if (index < 0) {
@@ -511,7 +560,7 @@ void DBMS::Select(Select_Command select)
 			//第一个表达式的第二个元素
 			if (!select.condt.exp1.elem2.is_imme) {
 				if (!select.condt.exp1.elem2.attr.alias) {
-					int index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1); 
+					int index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1);
 					int index_2 = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index2);
 					if (index >= 0 && index_2 >= 0) {
 						cout << "Ambigious attribute.\n";
@@ -533,7 +582,7 @@ void DBMS::Select(Select_Command select)
 				//构建第二个表达式的attr的属性
 				if (!select.condt.exp2.elem1.is_imme) {
 					if (!select.condt.exp2.elem1.attr.alias) {
-						int index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index1); 
+						int index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index1);
 						int index_2 = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index2);
 						if (index >= 0 && index_2 >= 0) {
 							cout << "Ambigious attribute.\n";
@@ -554,7 +603,7 @@ void DBMS::Select(Select_Command select)
 				//第一个表达式的第二个元素
 				if (!select.condt.exp2.elem2.is_imme) {
 					if (!select.condt.exp2.elem2.attr.alias) {
-						int index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index1); 
+						int index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index1);
 						int index_2 = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index2);
 						if (index >= 0 && index_2 >= 0) {
 							cout << "Ambigious attribute.\n";
@@ -577,8 +626,8 @@ void DBMS::Select(Select_Command select)
 		int t1, t2;
 		int table1_size = tables[index1].tuples.size();
 		int table2_size = tables[index2].tuples.size();
-		for (t1 = 0; t1 < table1_size;t1++) {
-			for (t2 = 0; t2 < table2_size;t2++) {
+		for (t1 = 0; t1 < table1_size; t1++) {
+			for (t2 = 0; t2 < table2_size; t2++) {
 				if (select.condt.exp_num == 0) { // 将temp1， temp2中需要的attr放入valid_tuple.values[k]
 					Tuple t;
 					for (int i = 0; i < attr_size; i++) {
@@ -601,8 +650,15 @@ void DBMS::Select(Select_Command select)
 							return;
 						}
 						if (tables[elem1_table].attr[elem1_index].type == _INT) {
-							int elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
-							int elem2_val = atoi(tables[elem2_table].tuples[t2].values[elem2_index].val.c_str());
+							int elem1_val, elem2_val;
+							if(elem1_table == index1) 
+								elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
+							else
+								elem1_val = atoi(tables[elem1_table].tuples[t2].values[elem1_index].val.c_str());
+							if(elem2_table == index1)
+								elem2_val = atoi(tables[elem2_table].tuples[t1].values[elem2_index].val.c_str());
+							else 
+								elem2_val = atoi(tables[elem2_table].tuples[t2].values[elem2_index].val.c_str());
 							switch (select.condt.exp1.op)
 							{
 							case GRE: {
@@ -628,8 +684,15 @@ void DBMS::Select(Select_Command select)
 							}
 						}
 						else {
-							string elem1_val = tables[elem1_table].tuples[t1].values[elem1_index].val;
-							string elem2_val = tables[elem2_table].tuples[t2].values[elem2_index].val;
+							string elem1_val, elem2_val;
+							if(elem1_table == index1)
+								elem1_val = tables[elem1_table].tuples[t1].values[elem1_index].val;
+							else
+								elem1_val = tables[elem1_table].tuples[t2].values[elem1_index].val;
+							if (elem2_table == index1)
+								elem2_val = tables[elem2_table].tuples[t1].values[elem2_index].val;
+							else
+								elem2_val = tables[elem2_table].tuples[t2].values[elem2_index].val;
 							switch (select.condt.exp1.op)
 							{
 							case EQU: {
@@ -653,7 +716,11 @@ void DBMS::Select(Select_Command select)
 							return;
 						}
 						if (tables[elem1_table].attr[elem1_index].type == _INT) {
-							int elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
+							int elem1_val;
+							if(elem1_table == index1)
+								elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
+							else
+								elem1_val = atoi(tables[elem1_table].tuples[t2].values[elem1_index].val.c_str());
 							int elem2_val = atoi(select.condt.exp1.elem2.imme.c_str());
 							switch (select.condt.exp1.op)
 							{
@@ -680,7 +747,11 @@ void DBMS::Select(Select_Command select)
 							}
 						}
 						else {
-							string elem1_val = tables[elem1_table].tuples[t1].values[elem1_index].val;
+							string elem1_val;
+							if(elem1_table == index1)
+								elem1_val = tables[elem1_table].tuples[t1].values[elem1_index].val;
+							else
+								elem1_val = tables[elem1_table].tuples[t2].values[elem1_index].val;
 							string elem2_val = select.condt.exp1.elem2.imme;
 							switch (select.condt.exp1.op)
 							{
@@ -721,8 +792,15 @@ void DBMS::Select(Select_Command select)
 								return;
 							}
 							if (tables[elem1_table].attr[elem1_index].type == _INT) {
-								int elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
-								int elem2_val = atoi(tables[elem2_table].tuples[t2].values[elem2_index].val.c_str());
+								int elem1_val, elem2_val;
+								if (elem1_table == index1)
+									elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
+								else
+									elem1_val = atoi(tables[elem1_table].tuples[t2].values[elem1_index].val.c_str());
+								if (elem2_table == index1)
+									elem2_val = atoi(tables[elem2_table].tuples[t1].values[elem2_index].val.c_str());
+								else
+									elem2_val = atoi(tables[elem2_table].tuples[t2].values[elem2_index].val.c_str());
 								switch (select.condt.exp2.op)
 								{
 								case GRE: {
@@ -748,8 +826,15 @@ void DBMS::Select(Select_Command select)
 								}
 							}
 							else {
-								string elem1_val = tables[elem1_table].tuples[t1].values[elem1_index].val;
-								string elem2_val = tables[elem2_table].tuples[t2].values[elem2_index].val;
+								string elem1_val, elem2_val;
+								if (elem1_table == index1)
+									elem1_val = tables[elem1_table].tuples[t1].values[elem1_index].val;
+								else
+									elem1_val = tables[elem1_table].tuples[t2].values[elem1_index].val;
+								if (elem2_table == index1)
+									elem2_val = tables[elem2_table].tuples[t1].values[elem2_index].val;
+								else
+									elem2_val = tables[elem2_table].tuples[t2].values[elem2_index].val;
 								switch (select.condt.exp2.op)
 								{
 								case EQU: {
@@ -773,7 +858,11 @@ void DBMS::Select(Select_Command select)
 								return;
 							}
 							if (tables[elem1_table].attr[elem1_index].type == _INT) {
-								int elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
+								int elem1_val;
+								if(elem1_table == index1)
+									elem1_val = atoi(tables[elem1_table].tuples[t1].values[elem1_index].val.c_str());
+								else
+									elem1_val = atoi(tables[elem1_table].tuples[t2].values[elem1_index].val.c_str());
 								int elem2_val = atoi(select.condt.exp2.elem2.imme.c_str());
 								switch (select.condt.exp2.op)
 								{
@@ -800,7 +889,11 @@ void DBMS::Select(Select_Command select)
 								}
 							}
 							else {
-								string elem1_val = tables[elem1_table].tuples[t1].values[elem1_index].val;
+								string elem1_val;
+								if (elem1_table == index1)
+									elem1_val = tables[elem1_table].tuples[t1].values[elem1_index].val;
+								else
+									elem1_val = tables[elem1_table].tuples[t2].values[elem1_index].val;
 								string elem2_val = select.condt.exp2.elem2.imme;
 								switch (select.condt.exp2.op)
 								{
@@ -856,15 +949,38 @@ void DBMS::Select(Select_Command select)
 			cout << sum << endl;
 		}
 		else if (select.func_mode == NOR) {
+			for (int i = 0; i < attr_size; i++)
+				cout << setw(25) << select.attr[i].attr_name;
+			cout << endl;
 			for (int i = 0; i < tuple_size; i++) {
 				for (int j = 0; j < attr_size; j++)
-					cout << valid_tuple[i].values[j].val << "      ";
+					cout << setw(25) << valid_tuple[i].values[j].val;
 				cout << endl;
 			}
 		}
 	}
-}	
+}
 
+void DBMS::save_data()
+{
+	int table_size = tables.size();
+	for (int i = 0; i < table_size; i++)
+	{
+		tables[i].write_data();
+	}
+	cout << "save is done.\n";
+	return;
+}
+
+void DBMS::load_data()
+{
+	int table_size = tables.size();
+	for (int i = 0; i < table_size; i++)
+	{
+		tables[i].load_data();
+	}
+	cout << "load is done.\n";
+}
 
 
 

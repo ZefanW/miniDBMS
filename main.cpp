@@ -110,13 +110,30 @@ int main()
 	cout << "Input command lines below to utilize the DBMS" << endl;
 	cout << "Notice: input files is recommended because it will be faster." << endl;
 	cout << "To input a (.sql)file:	input [filename]" << endl;
-	cout << "To input sql lines:	raw\n			[sql codes]\n			end\n" << endl;
+	cout << "To input sql lines:	raw\n			[sql codes]\n			end [ctrl+Z]\n" << endl;
 	cout << "To terminate the program:	exit" << endl;
 	string command;
 	char type[256] = {};
 	char inputfile[256] = {};
+	FILE *p;
+	/*p = freopen("tables.txt", "r", stdin);
+	lex();
+	fclose(p);
+	p = freopen("tweets.sql", "r", stdin);
+	lex();
+	fclose(p);
+	p = freopen("user1.sql", "r", stdin);
+	lex();
+	fclose(p);*/
+	//p = freopen("select2.sql", "r", stdin);
+	//lex();
+	//fclose(p);
+	freopen("con", "r", stdin);
+	//dbms.tables[0].print_table();
+	//dbms.tables[1].print_table();
 	while (true)
 	{
+		
 		//do { getline(cin, command); } while (command.size() == 0 || command[0] == '\n' || command[0] == '\r');
 		getline(cin, command);
 		//cout << command.length() << endl;
@@ -128,11 +145,16 @@ int main()
 			sscanf(command.c_str(), "%s %s", type, inputfile);
 			strcpy(CurFile, inputfile);
 			filenum += 1;
-			streambuf *cinbuf = cin.rdbuf();
-			FILE *p=freopen(inputfile, "r", stdin);
+			//streambuf *cinbuf = cin.rdbuf();
+			if (!(p = freopen(inputfile, "r", stdin)))
+			{
+				cout << "Cannot open current file. " << endl;
+				freopen("con", "r", stdin);
+				memset(type, 0, sizeof(type));
+				memset(inputfile, 0, sizeof(inputfile));
+				continue;
+			}
 			lex();
-			dbms.tables[0].print_table();
-			dbms.tables[1].print_table();
 			fclose(p);
 			//cin.clear();
 			//cin.rdbuf(cinbuf);
@@ -142,8 +164,8 @@ int main()
 		}
 		else if (types.compare("exit") == 0)
 		{
-			dbms.tables[0].print_table();
-			dbms.tables[1].print_table();
+			//dbms.tables[0].print_table();
+			//dbms.tables[1].print_table();
 			return 0;
 		}
 		else if(types.compare("raw")==0)
@@ -153,6 +175,14 @@ int main()
 			//cin.rdbuf(ss.rdbuf());
 			lex();
 			//cin.rdbuf(cinbuf);
+		}
+		else if (types.compare("save") == 0)
+		{
+			dbms.save_data();
+		}
+		else if (types.compare("load") == 0)
+		{
+			dbms.load_data();
 		}
 	}
 }
