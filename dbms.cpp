@@ -200,7 +200,7 @@ void DBMS::Select(Select_Command select)
 	int index1 = -1, index2 = -1;
 	index1 = get_table_index(select.tablename[0]);
 	if (index1 < 0) { cout << "Cannot find table by name : " << select.tablename[0]; return; }
-	vector<Tuple> valid_tuple; valid_tuple.reserve(1000);
+	vector<Tuple> valid_tuple; valid_tuple.reserve(3000);
 	if (select.tablename.size() == 1) {
 		int attr_size = select.attr.size();
 		for (int i = 0; i < attr_size; i++) {
@@ -959,6 +959,27 @@ void DBMS::Select(Select_Command select)
 			}
 		}
 	}
+}
+
+void DBMS::save_data()
+{
+	int table_size = tables.size();
+	for (int i = 0; i < table_size; i++)
+	{
+		tables[i].write_data();
+	}
+	cout << "save is done.\n";
+	return;
+}
+
+void DBMS::load_data()
+{
+	int table_size = tables.size();
+	for (int i = 0; i < table_size; i++)
+	{
+		tables[i].load_data();
+	}
+	cout << "load is done.\n";
 }
 
 

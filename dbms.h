@@ -13,4 +13,6 @@ public:
 	void Insert(Insert_Command insert);
 	void Create(Create_Command create, Table &t);
 	void Select(Select_Command select);
+	void save_data();
+	void load_data();
 };
