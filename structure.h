@@ -103,8 +103,6 @@ public:
 		}
 		cout << "----------------- End of Table: " << table_name << " -------------------" << endl << endl;
 	}
-	void write_data();
-	void load_data();
 };
 
 class Element {
