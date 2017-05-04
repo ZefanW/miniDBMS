@@ -164,8 +164,8 @@ int main()
 		}
 		else if (types.compare("exit") == 0)
 		{
-			//dbms.tables[0].print_table();
-			//dbms.tables[1].print_table();
+			dbms.tables[0].print_table();
+			dbms.tables[1].print_table();
 			return 0;
 		}
 		else if(types.compare("raw")==0)
@@ -175,14 +175,6 @@ int main()
 			//cin.rdbuf(ss.rdbuf());
 			lex();
 			//cin.rdbuf(cinbuf);
-		}
-		else if (types.compare("save") == 0)
-		{
-			dbms.save_data();
-		}
-		else if (types.compare("load") == 0)
-		{
-			dbms.load_data();
 		}
 	}
 }
