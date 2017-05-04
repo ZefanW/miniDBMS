@@ -211,27 +211,28 @@ void DBMS::Select(Select_Command select)
 		// construct valid_tuple
 		if (select.condt.exp_num == 0)	valid_tuple = tables[index1].tuples;
 		else {
-			if (!select.condt.exp1.elem1.is_imme) { //µÚÒ»¸öÔªËØ²»ÊÇÁ¢¼´Êı,µÃµ½attindex
+			if (!select.condt.exp1.elem1.is_imme) { //ç¬¬ä¸€ä¸ªå…ƒç´ ä¸æ˜¯ç«‹å³æ•°,å¾—åˆ°attindex
 				select.condt.exp1.elem1.attr.attr_index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1);
 			}
-			if (!select.condt.exp1.elem2.is_imme) {//µÚ¶ş¸öÔªËØ²»ÊÇÁ¢¼´Êı,µÃµ½attindex
+			if (!select.condt.exp1.elem2.is_imme) {//ç¬¬äºŒä¸ªå…ƒç´ ä¸æ˜¯ç«‹å³æ•°,å¾—åˆ°attindex
 				select.condt.exp1.elem2.attr.attr_index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1);
 			}
 			if (select.condt.exp_num == 2) {
-				if (!select.condt.exp2.elem1.is_imme) { //µÚÒ»¸öÔªËØ²»ÊÇÁ¢¼´Êı,µÃµ½attrindex
+				if (!select.condt.exp2.elem1.is_imme) { //ç¬¬ä¸€ä¸ªå…ƒç´ ä¸æ˜¯ç«‹å³æ•°,å¾—åˆ°attrindex
 					select.condt.exp2.elem1.attr.attr_index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index1);
 				}
-				if (!select.condt.exp2.elem2.is_imme) { //µÚ¶ş¸öÔªËØ²»ÊÇÁ¢¼´Êı£¬µÃµ½attrindex
+				if (!select.condt.exp2.elem2.is_imme) { //ç¬¬äºŒä¸ªå…ƒç´ ä¸æ˜¯ç«‹å³æ•°ï¼Œå¾—åˆ°attrindex
 					select.condt.exp2.elem2.attr.attr_index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index1);
+
 				}
 			}
 			for (Tuple temp : tables[index1].tuples) {
 				bool check1 = false;
-				// Ã¿¸ö±í´ïÊ½µÄµÚÒ»¸öÔªËØÓ¦¸ÃÎªattr£¬ µÚ¶ş¸öÔªËØ²Å¿ÉÒÔÊÇÁ¢¼´Êı
-				if (!select.condt.exp1.elem2.is_imme) { //µÚ¶ş¸öÔªËØ²»ÊÇÁ¢¼´Êı,µÃµ½attindex£¬¿ªÊ¼±È½Ï
+				// æ¯ä¸ªè¡¨è¾¾å¼çš„ç¬¬ä¸€ä¸ªå…ƒç´ åº”è¯¥ä¸ºattrï¼Œ ç¬¬äºŒä¸ªå…ƒç´ æ‰å¯ä»¥æ˜¯ç«‹å³æ•°
+				if (!select.condt.exp1.elem2.is_imme) { //ç¬¬äºŒä¸ªå…ƒç´ ä¸æ˜¯ç«‹å³æ•°,å¾—åˆ°attindexï¼Œå¼€å§‹æ¯”è¾ƒ
 					int elem2_index = select.condt.exp1.elem2.attr.attr_index;
 					int elem1_index = select.condt.exp1.elem1.attr.attr_index;
-					//¼ì²éÁ½¸öattrµÄtypeÊÇ·ñÒ»ÖÂ
+					//æ£€æŸ¥ä¸¤ä¸ªattrçš„typeæ˜¯å¦ä¸€è‡´
 					if (temp.values[elem1_index].type != temp.values[elem2_index].type) {
 						cout << "Type mismatch, cannot compare.\n";
 						return;
@@ -282,9 +283,86 @@ void DBMS::Select(Select_Command select)
 						}
 					}
 				}
-				else { // µÚ¶ş¸öÔªËØÊÇÁ¢¼´Êı
+				else { // ç¬¬äºŒä¸ªå…ƒç´ æ˜¯ç«‹å³æ•°
 					int elem1_index = select.condt.exp1.elem1.attr.attr_index;
-					//¼ì²éÁ¢¼´ÊıÀàĞÍºÍattrÀàĞÍÊÇ·ñÒ»ÖÂ
+					//æ£€æŸ¥ç«‹å³æ•°ç±»å‹å’Œattrç±»å‹æ˜¯å¦ä¸€è‡´
+					if (temp.values[elem1_index].type != select.condt.exp1.elem2.imme_type) {
+						cout << "Type mismatch, cannot compare.\n";
+						return;
+					}
+					if (temp.values[elem1_index].type == _INT) {
+						int elem1_val = atoi(temp.values[elem1_index].val.c_str());
+						int elem2_val = atoi(select.condt.exp1.elem2.imme.c_str());
+
+				}
+			}
+			for (Tuple temp : tables[index1].tuples) {
+				bool check1 = false;
+				// æ¯ä¸ªè¡¨è¾¾å¼çš„ç¬¬ä¸€ä¸ªå…ƒç´ åº”è¯¥ä¸ºattrï¼Œ ç¬¬äºŒä¸ªå…ƒç´ æ‰å¯ä»¥æ˜¯ç«‹å³æ•°
+				if (!select.condt.exp1.elem2.is_imme) { //ç¬¬äºŒä¸ªå…ƒç´ ä¸æ˜¯ç«‹å³æ•°,å¾—åˆ°attindexï¼Œå¼€å§‹æ¯”è¾ƒ
+					int elem2_index = select.condt.exp1.elem2.attr.attr_index;
+					int elem1_index = select.condt.exp1.elem1.attr.attr_index;
+					//æ£€æŸ¥ä¸¤ä¸ªattrçš„typeæ˜¯å¦ä¸€è‡´
+					if (temp.values[elem1_index].type != temp.values[elem2_index].type) {
+						cout << "Type mismatch, cannot compare.\n";
+						return;
+					}
+					if (temp.values[elem2_index].type == _INT) {
+						int elem1_val, elem2_val;
+						elem1_val = atoi(temp.values[elem1_index].val.c_str());
+						elem2_val = atoi(temp.values[elem2_index].val.c_str());
+
+						switch (select.condt.exp1.op)
+						{
+						case GRE: {
+							if (elem1_val > elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case LESS: {
+							if (elem1_val < elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case EQU: {
+							if (elem1_val == elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case NEQ: {
+							if (elem1_val != elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						}
+					}
+					else {
+
+						string elem1_val = temp.values[elem1_index].val;
+						string elem2_val = select.condt.exp1.elem2.imme;
+
+						string elem1_val = temp.values[select.condt.exp1.elem1.attr.attr_index].val;
+						string elem2_val = temp.values[elem2_index].val;
+
+						switch (select.condt.exp1.op)
+						{
+						case EQU: {
+							if (elem1_val == elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						case NEQ: {
+							if (elem1_val != elem2_val) check1 = true;
+							else check1 = false;
+							break;
+						}
+						}
+					}
+				}
+
+				else { // ç¬¬äºŒä¸ªå…ƒç´ æ˜¯ç«‹å³æ•°
+					int elem1_index = select.condt.exp1.elem1.attr.attr_index;
+					//æ£€æŸ¥ç«‹å³æ•°ç±»å‹å’Œattrç±»å‹æ˜¯å¦ä¸€è‡´
 					if (temp.values[elem1_index].type != select.condt.exp1.elem2.imme_type) {
 						cout << "Type mismatch, cannot compare.\n";
 						return;
@@ -334,15 +412,16 @@ void DBMS::Select(Select_Command select)
 						}
 					}
 				}
+
 				if (select.condt.exp_num == 1) {
 					if (check1) valid_tuple.push_back(temp);
 				}
 				else if (select.condt.exp_num == 2) {
 					bool check2 = false;
-					if (!select.condt.exp2.elem2.is_imme) { //µÚ¶ş¸öÔªËØ²»ÊÇÁ¢¼´Êı£¬¿ªÊ¼±È½Ï
+					if (!select.condt.exp2.elem2.is_imme) { //ç¬¬äºŒä¸ªå…ƒç´ ä¸æ˜¯ç«‹å³æ•°ï¼Œå¼€å§‹æ¯”è¾ƒ
 						int elem1_index = select.condt.exp2.elem1.attr.attr_index;
 						int elem2_index = select.condt.exp2.elem2.attr.attr_index;
-						//¼ì²éÁ½¸öattrµÄtypeÊÇ·ñÒ»ÖÂ
+						//æ£€æŸ¥ä¸¤ä¸ªattrçš„typeæ˜¯å¦ä¸€è‡´
 						if (temp.values[elem1_index].type != temp.values[elem2_index].type) {
 							cout << "Type mismatch, cannot compare.\n";
 							return;
@@ -393,7 +472,7 @@ void DBMS::Select(Select_Command select)
 							}
 						}
 					}
-					else { // µÚ¶ş¸öÔªËØÊÇÁ¢¼´Êı
+					else { // ç¬¬äºŒä¸ªå…ƒç´ æ˜¯ç«‹å³æ•°
 						int elem1_index = select.condt.exp2.elem1.attr.attr_index;
 						if (temp.values[elem1_index].type != select.condt.exp2.elem2.imme_type) {
 							cout << "Type mismatch, cannot compare.\n";
@@ -459,7 +538,7 @@ void DBMS::Select(Select_Command select)
 			}
 		}
 
-		// Ö»ÓĞÒ»¸ö±íµÄÊ±ºò£¬°ÑËùÓĞµÄattr¶¼·Åµ½valid_tupleÖĞÁË
+		// åªæœ‰ä¸€ä¸ªè¡¨çš„æ—¶å€™ï¼ŒæŠŠæ‰€æœ‰çš„attréƒ½æ”¾åˆ°valid_tupleä¸­äº†
 		int tuple_num = valid_tuple.size();
 		cout << "Result: " << endl;
 		if (select.func_mode == NOR) {
@@ -505,18 +584,18 @@ void DBMS::Select(Select_Command select)
 	else if (select.tablename.size() == 2) {
 		index2 = get_table_index(select.tablename[1]);
 		if (index2 < 0) { cout << "Cannot find table by name : " << select.tablename[1]; return; }
-		// COUNT(*)³öÏÖµÄÊ±ºò£¬attr´ÓwhereÖĞÈ¡µÃ£¬ÔÚ¹¹½¨ÀàµÄÊ±ºòÊµÏÖ±È½Ï·½±ã£¡£¡ is_all Ò²²»ÓÃÖÃtrue
-		// b.*ÕâÑùµÄ¶«Î÷³öÏÖÊ±£¬is_all ²»ÓÃÖÃÎªtrue£¬ÔÚ¹¹½¨ÀàµÄÊ±ºòÍê³Éattr¾ÍĞĞ
-		// Ò²¾ÍÊÇËµ£¬Á½¸ö±íÊ±²»¼ì²éis_all, Õâ¸öÉè¼ÆÓĞµãÊ§°Ü
+		// COUNT(*)å‡ºç°çš„æ—¶å€™ï¼Œatträ»whereä¸­å–å¾—ï¼Œåœ¨æ„å»ºç±»çš„æ—¶å€™å®ç°æ¯”è¾ƒæ–¹ä¾¿ï¼ï¼ is_all ä¹Ÿä¸ç”¨ç½®true
+		// b.*è¿™æ ·çš„ä¸œè¥¿å‡ºç°æ—¶ï¼Œis_all ä¸ç”¨ç½®ä¸ºtrueï¼Œåœ¨æ„å»ºç±»çš„æ—¶å€™å®Œæˆattrå°±è¡Œ
+		// ä¹Ÿå°±æ˜¯è¯´ï¼Œä¸¤ä¸ªè¡¨æ—¶ä¸æ£€æŸ¥is_all, è¿™ä¸ªè®¾è®¡æœ‰ç‚¹å¤±è´¥
 		int attr_size = select.attr.size();
-		// ¹¹½¨ºÃÃ¿¸öattrµÄÊôĞÔ
+		// æ„å»ºå¥½æ¯ä¸ªattrçš„å±æ€§
 		for (int i = 0; i < attr_size; i++) {
-			//Ã»ÓĞ±ğÃûµÄÇé¿ö
+			//æ²¡æœ‰åˆ«åçš„æƒ…å†µ
 			if (!select.attr[i].alias) {
-				// ¼ÙÉèÔÚtable1ÖĞ
+				// å‡è®¾åœ¨table1ä¸­
 				int index = get_attr_index(select.attr[i].attr_name, index1);
 				int index_2 = get_attr_index(select.attr[i].attr_name, index2);
-				// Èç¹ûÔÚÁ½¸ö±íÖĞ¶¼ÕÒµ½ÁËÕâ¸öattr
+				// å¦‚æœåœ¨ä¸¤ä¸ªè¡¨ä¸­éƒ½æ‰¾åˆ°äº†è¿™ä¸ªattr
 				if (index >= 0 && index_2 >= 0) {
 					cout << "Ambigious attribute in select.\n";
 					return;
@@ -528,15 +607,15 @@ void DBMS::Select(Select_Command select)
 					select.attr[i].table_index = index1; select.attr[i].attr_index = index;
 				}
 			}
-			//ÓĞ±ğÃûµÄÇé¿ö
+			//æœ‰åˆ«åçš„æƒ…å†µ
 			else {
 				select.attr[i].table_index = get_table_index(select.attr[i].tablename);
 				select.attr[i].attr_index = get_attr_index(select.attr[i].attr_name, select.attr[i].table_index);
 			}
 		}
-		// ¹¹½¨conditionÖĞµÄattrµÄÊôĞÔ
+		// æ„å»ºconditionä¸­çš„attrçš„å±æ€§
 		if (select.condt.exp_num) {
-			//¹¹½¨µÚÒ»¸ö±í´ïÊ½µÄattrµÄÊôĞÔ
+			//æ„å»ºç¬¬ä¸€ä¸ªè¡¨è¾¾å¼çš„attrçš„å±æ€§
 			if (!select.condt.exp1.elem1.is_imme) {
 				if (!select.condt.exp1.elem1.attr.alias) {
 					int index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1);
@@ -557,7 +636,7 @@ void DBMS::Select(Select_Command select)
 					select.condt.exp1.elem1.attr.attr_index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, select.condt.exp1.elem1.attr.table_index);
 				}
 			}
-			//µÚÒ»¸ö±í´ïÊ½µÄµÚ¶ş¸öÔªËØ
+			//ç¬¬ä¸€ä¸ªè¡¨è¾¾å¼çš„ç¬¬äºŒä¸ªå…ƒç´ 
 			if (!select.condt.exp1.elem2.is_imme) {
 				if (!select.condt.exp1.elem2.attr.alias) {
 					int index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1);
@@ -579,7 +658,7 @@ void DBMS::Select(Select_Command select)
 				}
 			}
 			if (select.condt.exp_num == 2) {
-				//¹¹½¨µÚ¶ş¸ö±í´ïÊ½µÄattrµÄÊôĞÔ
+				//æ„å»ºç¬¬äºŒä¸ªè¡¨è¾¾å¼çš„attrçš„å±æ€§
 				if (!select.condt.exp2.elem1.is_imme) {
 					if (!select.condt.exp2.elem1.attr.alias) {
 						int index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index1);
@@ -600,7 +679,7 @@ void DBMS::Select(Select_Command select)
 						select.condt.exp2.elem1.attr.attr_index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, select.condt.exp2.elem1.attr.table_index);
 					}
 				}
-				//µÚÒ»¸ö±í´ïÊ½µÄµÚ¶ş¸öÔªËØ
+				//ç¬¬ä¸€ä¸ªè¡¨è¾¾å¼çš„ç¬¬äºŒä¸ªå…ƒç´ 
 				if (!select.condt.exp2.elem2.is_imme) {
 					if (!select.condt.exp2.elem2.attr.alias) {
 						int index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index1);
@@ -628,7 +707,7 @@ void DBMS::Select(Select_Command select)
 		int table2_size = tables[index2].tuples.size();
 		for (t1 = 0; t1 < table1_size; t1++) {
 			for (t2 = 0; t2 < table2_size; t2++) {
-				if (select.condt.exp_num == 0) { // ½«temp1£¬ temp2ÖĞĞèÒªµÄattr·ÅÈëvalid_tuple.values[k]
+				if (select.condt.exp_num == 0) { // å°†temp1ï¼Œ temp2ä¸­éœ€è¦çš„attræ”¾å…¥valid_tuple.values[k]
 					Tuple t;
 					for (int i = 0; i < attr_size; i++) {
 						if (select.attr[i].table_index == index1)
@@ -640,7 +719,7 @@ void DBMS::Select(Select_Command select)
 				}
 				else {
 					bool check1 = false;
-					if (!select.condt.exp1.elem2.is_imme) { //µÚ¶ş¸öÔªËØ²»ÊÇÁ¢¼´Êı,¿ªÊ¼±È½Ï
+					if (!select.condt.exp1.elem2.is_imme) { //ç¬¬äºŒä¸ªå…ƒç´ ä¸æ˜¯ç«‹å³æ•°,å¼€å§‹æ¯”è¾ƒ
 						int elem1_index = select.condt.exp1.elem1.attr.attr_index;
 						int elem2_index = select.condt.exp1.elem2.attr.attr_index;
 						int elem1_table = select.condt.exp1.elem1.attr.table_index;
@@ -708,7 +787,7 @@ void DBMS::Select(Select_Command select)
 							}
 						}
 					}
-					else { // µÚ¶ş¸öÔªËØÊÇÁ¢¼´Êı£¬¿ªÊ¼±È½Ï
+					else { // ç¬¬äºŒä¸ªå…ƒç´ æ˜¯ç«‹å³æ•°ï¼Œå¼€å§‹æ¯”è¾ƒ
 						int elem1_index = select.condt.exp1.elem1.attr.attr_index;
 						int elem1_table = select.condt.exp1.elem1.attr.table_index;
 						if (tables[elem1_table].attr[elem1_index].type != select.condt.exp1.elem2.imme_type) {
@@ -769,7 +848,7 @@ void DBMS::Select(Select_Command select)
 						}
 					}
 					if (select.condt.exp_num == 1) {
-						if (check1) { // ¼ÓÈëĞèÒªµÄattr×é³Étuple£¬¼ÓÈëvalid_tupleÖĞ
+						if (check1) { // åŠ å…¥éœ€è¦çš„attrç»„æˆtupleï¼ŒåŠ å…¥valid_tupleä¸­
 							Tuple t;
 							for (int i = 0; i < attr_size; i++) {
 								if (select.attr[i].table_index == index1)
@@ -782,7 +861,7 @@ void DBMS::Select(Select_Command select)
 					}
 					else if (select.condt.exp_num == 2) {
 						bool check2 = false; bool is_good = false;
-						if (!select.condt.exp2.elem2.is_imme) { //µÚ¶ş¸öÔªËØ²»ÊÇÁ¢¼´Êı,¿ªÊ¼±È½Ï
+						if (!select.condt.exp2.elem2.is_imme) { //ç¬¬äºŒä¸ªå…ƒç´ ä¸æ˜¯ç«‹å³æ•°,å¼€å§‹æ¯”è¾ƒ
 							int elem1_index = select.condt.exp2.elem1.attr.attr_index;
 							int elem2_index = select.condt.exp2.elem2.attr.attr_index;
 							int elem1_table = select.condt.exp2.elem1.attr.table_index;
@@ -850,7 +929,7 @@ void DBMS::Select(Select_Command select)
 								}
 							}
 						}
-						else { // µÚ¶ş¸öÔªËØÊÇÁ¢¼´Êı£¬¿ªÊ¼±È½Ï
+						else { // ç¬¬äºŒä¸ªå…ƒç´ æ˜¯ç«‹å³æ•°ï¼Œå¼€å§‹æ¯”è¾ƒ
 							int elem1_index = select.condt.exp2.elem1.attr.attr_index;
 							int elem1_table = select.condt.exp2.elem1.attr.table_index;
 							if (tables[elem1_table].attr[elem1_index].type != select.condt.exp2.elem2.imme_type) {
@@ -961,6 +1040,7 @@ void DBMS::Select(Select_Command select)
 	}
 }
 
+
 void DBMS::save_data()
 {
 	int table_size = tables.size();
@@ -981,6 +1061,7 @@ void DBMS::load_data()
 	}
 	cout << "load is done.\n";
 }
+
 
 
 
