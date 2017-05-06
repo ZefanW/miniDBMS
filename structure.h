@@ -5,7 +5,14 @@
 #include <vector>
 #include <string>
 #include <iomanip> 
+#include<map>
+#include<unordered_map>
+#include<algorithm>
 using namespace std;
+
+vector < unordered_map<string, int> > StringIndexList;
+vector<multimap<int, int> > IntIndexList;
+vector<vector<int> > HashTargetList;
 
 typedef enum VAR_TYPE {
 	_INT, VARCHAR, _NULL
@@ -65,6 +72,7 @@ public:
 	int len;
 	bool is_primary;
 	bool not_null;
+	int indexpos;
 
 	Attribute() {};
 	Attribute(string name, TYPE t, int l, bool pri, bool n) {
@@ -75,6 +83,116 @@ public:
 		not_null = n;
 	}
 };
+
+void insert_index(Attribute& target, int index, Value& element)
+{
+	if (target.type == VARCHAR)
+	{
+		if (StringIndexList[target.indexpos].count(element.val))HashTargetList[StringIndexList[target.indexpos][element.val]].push_back(index);
+		else
+		{
+			int vectorindex = HashTargetList.size();
+			StringIndexList[target.indexpos].insert(make_pair(element.val, vectorindex));
+			HashTargetList[vectorindex].push_back(index);
+		}
+	}
+	else if (target.type == _INT)
+	{
+		int intform = atoi(element.val.c_str());
+		IntIndexList[target.indexpos].insert(make_pair(intform, index));
+	}
+}
+
+void select_from_index(Attribute& target, Value& Comparison, OP op, vector<int>& returnvalue)
+{
+	if (target.type == VARCHAR)
+	{
+		//Assuming op can only be EQUAL or NEQUAL
+		int result;
+		if (StringIndexList[target.indexpos].count(Comparison.val))
+		{
+			result= StringIndexList[target.indexpos][Comparison.val];
+		}
+		else result = -1;
+		if (op == EQU)
+		{
+			if (result == -1)
+			{
+				returnvalue.resize(0);
+				return;
+			}
+			else
+			{
+				returnvalue = HashTargetList[result];
+				return;
+			}
+		}
+		else if (op == NEQ)
+		{
+			for (unordered_map<string,int>::iterator it = StringIndexList[target.indexpos].begin(); it != StringIndexList[target.indexpos].end(); it++)
+			{
+				if (result != (*it).second)
+				{
+					int Hashindex = (*it).second;
+					for (vector<int>::iterator it2 = HashTargetList[Hashindex].begin(); it2 != HashTargetList[Hashindex].end(); it2++)
+					{
+						returnvalue.push_back(*it2);
+					}
+				}
+			}
+			sort(returnvalue.begin(), returnvalue.end());
+			return;
+		}
+	}
+	else if (target.type == _INT)
+	{
+		int intform = atoi(Comparison.val.c_str());
+		pair< multimap<int, int>::iterator, multimap<int, int>::iterator > indexrange;
+		switch(op)
+		{
+			case GRE:
+			{
+				indexrange.first = IntIndexList[target.indexpos].upper_bound(intform);
+				indexrange.second = IntIndexList[target.indexpos].end();
+				for (multimap<int, int>::iterator it = indexrange.first; it != indexrange.second; it++)
+				{
+					returnvalue.push_back(it->second);
+				}
+				break;
+			}
+			case LESS:
+			{
+				indexrange.second = IntIndexList[target.indexpos].lower_bound(intform);
+				indexrange.second--;
+				indexrange.first = IntIndexList[target.indexpos].begin();
+				for (multimap<int, int>::iterator it = indexrange.first; it != indexrange.second; it++)
+				{
+					returnvalue.push_back(it->second);
+				}
+				break;
+			}
+			case EQU:
+			{
+				indexrange = IntIndexList[target.indexpos].equal_range(intform);
+				for (multimap<int, int>::iterator it = indexrange.first; it != indexrange.second; it++)
+				{
+					returnvalue.push_back(it->second);
+				}
+				break;
+			}
+			case NEQ:
+			{
+				for (multimap<int, int>::iterator it = indexrange.first; it != indexrange.second; it++)
+				{
+					if (it->first != intform)returnvalue.push_back(it->second);
+				}
+				break;
+			}
+			default:break;
+		}
+		sort(returnvalue.begin(), returnvalue.end());
+	}
+}
 
 class Table {
 public:
