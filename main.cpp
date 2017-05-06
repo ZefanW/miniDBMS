@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 DBMS dbms;
+
 #define YY_NO_UNISTD_H 1
 #include<io.h>
 #define isatty _isatty
