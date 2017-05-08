@@ -1,11 +1,16 @@
 #pragma once
+#include <Windows.h>
 #include "dbms.h"
 using namespace std;
+extern LARGE_INTEGER tinterval;
+extern LARGE_INTEGER t1, t2, tc;
 
 vector < unordered_map<string, int> > StringIndexList;
 vector<multimap<int, int> > IntIndexList;
 vector<vector<int> > HashTargetList;
 
+void select_from_index(Attribute& target, Value& Comparison, OP op, vector<int>& returnvalue);
+void insert_index(Attribute& target, int index, Value& element);
 DBMS::DBMS()
 {
 	tables.reserve(10);
@@ -149,6 +154,14 @@ void DBMS::Insert(Insert_Command insert)
 		}
 		tables[k].tuples.push_back(in_tuple);
 	}
+
+	//Insertion of Indexes
+	int index = tables[k].tuples.size() - 1;
+	int AttrNum = 0;
+	for (vector<Value>::iterator it1 = tables[k].tuples[index].values.begin(); it1 != tables[k].tuples[index].values.end(); it1++)
+	{
+		insert_index(tables[k].attr[AttrNum++], index, *it1);
+	}
 	//cout << "Current tuple num: " << t.tuples.size() << endl;
 	//t.print_table();
 }
@@ -245,21 +258,26 @@ void DBMS::Select(Select_Command select)
 		else {
 			if (!select.condt.exp1.elem1.is_imme) { //第一个元素不是立即数,得到attindex
 				select.condt.exp1.elem1.attr.attr_index = get_attr_index(select.condt.exp1.elem1.attr.attr_name, index1);
+				select.condt.exp1.elem1.attr.table_index = index1;
 			}
 			if (!select.condt.exp1.elem2.is_imme) {//第二个元素不是立即数,得到attindex
 				select.condt.exp1.elem2.attr.attr_index = get_attr_index(select.condt.exp1.elem2.attr.attr_name, index1);
+				select.condt.exp1.elem2.attr.table_index = index1;
 			}
 			if (select.condt.exp_num == 2) {
 				if (!select.condt.exp2.elem1.is_imme) { //第一个元素不是立即数,得到attrindex
 					select.condt.exp2.elem1.attr.attr_index = get_attr_index(select.condt.exp2.elem1.attr.attr_name, index1);
+					select.condt.exp2.elem1.attr.table_index = index1;
 				}
 				if (!select.condt.exp2.elem2.is_imme) { //第二个元素不是立即数，得到attrindex
 					select.condt.exp2.elem2.attr.attr_index = get_attr_index(select.condt.exp2.elem2.attr.attr_name, index1);
+					select.condt.exp2.elem2.attr.table_index = index1;
 				}
 			}
 
 			// 属性构建完毕
 			// 如果只有一个条件，那么优化为A类
+
 			if (select.condt.exp_num == 1 && select.condt.exp1.elem2.is_imme)
 			{
 				if (select.condt.exp1.op == GRE || select.condt.exp1.op == LESS)
@@ -270,8 +288,9 @@ void DBMS::Select(Select_Command select)
 				{
 					select_equal(select.condt.exp1, index);
 				}
-
 				int tuple_num = index.size();
+				QueryPerformanceCounter(&tinterval);
+				cout << "Processing Time: " << (tinterval.QuadPart - t1.QuadPart)*1.0 / tc.QuadPart << "s" << endl;
 				cout << "Result: " << endl;
 				if (select.func_mode == NOR)
 				{
@@ -315,8 +334,10 @@ void DBMS::Select(Select_Command select)
 					cout << sum << endl;
 				}
 			}
+			
 			else if (select.condt.exp_num == 2 && select.condt.exp1.elem2.is_imme && select.condt.exp2.elem2.is_imme)
 			{
+				//FILE*f = fopen("test_wrong.txt", "w");
 				vector<int> exp1; exp1.reserve(200);
 				vector<int> exp2; exp2.reserve(200);
 				if (select.condt.exp1.op == GRE || select.condt.exp1.op == LESS)
@@ -346,9 +367,16 @@ void DBMS::Select(Select_Command select)
 					Union(exp1, exp2, index); break;
 				}
 				}
+				//for (int i = 0; i < index.size(); i++) fprintf(f, "%d\n", index[i]);
+				//fclose(f);
+				//cout << exp1.size() << "  " << exp2.size() << "  " << index.size();
 			}
+			
 			else {
-				for (Tuple temp : tables[index1].tuples) {
+				int num = tables[index1].tuples.size();
+				//FILE * f = fopen("test_right.txt", "w");
+				for (int i = 0; i < num;i++) {
+					Tuple temp = tables[index1].tuples[i];
 					bool check1 = false;
 					// 每个表达式的第一个元素应该为attr， 第二个元素才可以是立即数
 					if (!select.condt.exp1.elem2.is_imme) { //第二个元素不是立即数,得到attindex，开始比较
@@ -570,7 +598,9 @@ void DBMS::Select(Select_Command select)
 						switch (select.condt.logic)
 						{
 						case _AND: {
-							if (check1 && check2) valid_tuple.push_back(temp);
+							if (check1 && check2) { valid_tuple.push_back(temp);
+							//fprintf(f, "%d\n", i);
+							};
 							break;
 						}
 						case _OR: {
@@ -580,6 +610,9 @@ void DBMS::Select(Select_Command select)
 						}
 					}
 				}
+				//fclose(f);
+				QueryPerformanceCounter(&tinterval);
+				cout << "Processing Time: " << (tinterval.QuadPart - t1.QuadPart)*1.0 / tc.QuadPart << "s" << endl;
 				int tuple_num = valid_tuple.size();
 				cout << "Result (traverse): " << endl;
 				if (select.func_mode == NOR) {
@@ -621,10 +654,14 @@ void DBMS::Select(Select_Command select)
 					}
 					cout << sum << endl;
 				}
+				valid_tuple.clear();
+				return;
 			}
 		}
 
 		// 只有一个表的时候，把所有的attr都放到valid_tuple中了
+		QueryPerformanceCounter(&tinterval);
+		cout << "Processing Time: " << (tinterval.QuadPart - t1.QuadPart)*1.0 / tc.QuadPart << "s" << endl;
 		int tuple_num = index.size();
 		cout << "Result (index) : " << endl;
 		if (select.func_mode == NOR)
@@ -1217,6 +1254,8 @@ void DBMS::Select(Select_Command select)
 			}
 		}
 		// 输出
+		QueryPerformanceCounter(&tinterval);
+		cout << "Processing Time: " << (tinterval.QuadPart - t1.QuadPart)*1.0 / tc.QuadPart << "s" << endl;
 		int tuple_size = valid_tuple.size();
 		if (select.func_mode == COUNT) {
 			cout << tuple_size << endl;
@@ -1243,12 +1282,36 @@ void DBMS::Select(Select_Command select)
 	}
 }
 
-void DBMS::select_range(Expression exp, vector<int> index)
+void DBMS::select_range(Expression exp, vector<int> &index)
 {
+	Value v;
+	int attr_index = exp.elem1.attr.attr_index;
+	v.type = exp.elem2.imme_type;
+	v.val = exp.elem2.imme;
+	if (v.type != tables[exp.elem1.attr.table_index].attr[attr_index].type)
+	{
+		cout << "type mismatch.\n" << endl;
+		return;
+	}
+	select_from_index(tables[exp.elem1.attr.table_index].attr[attr_index], v, exp.op, index);
 }
 
-void DBMS::select_equal(Expression exp, vector<int> index)
+void DBMS::select_equal(Expression exp, vector<int> &index)
 {
+	//cout << exp.elem1.attr.attr_name << endl;
+	//cout << exp.elem2.imme << endl;
+	Value v;
+	int attr_index = exp.elem1.attr.attr_index;
+	//cout << exp.elem1.attr.tablename << "  " << exp.elem1.attr.table_index << endl;
+	//cout << tables[exp.elem1.attr.table_index].attr[attr_index].attr_name << endl;
+	v.type = exp.elem2.imme_type;
+	v.val = exp.elem2.imme;
+	if (v.type != tables[exp.elem1.attr.table_index].attr[attr_index].type)
+	{
+		cout << "type mismatch.\n" << endl;
+		return;
+	}
+	select_from_index(tables[exp.elem1.attr.table_index].attr[attr_index], v, exp.op, index);
 }
 
 void DBMS::save_data()
@@ -1272,7 +1335,24 @@ void DBMS::load_data()
 	cout << "load is done.\n";
 }
 
-void DBMS::intersect(vector<int> exp1, vector<int> exp2, vector<int> index)
+void DBMS::create_index()
+{
+	int table_size = tables.size();
+	for (int t = 0; t < table_size; t++)
+	{
+		int tuple_size = tables[t].tuples.size();
+		int attr_size = tables[t].attr.size();
+		for (int i = 0; i < tuple_size; i++)
+		{
+			for (int j = 0; j < attr_size; j++)
+			{
+				insert_index(tables[t].attr[j], i, tables[t].tuples[i].values[j]);
+			}
+		}
+	}
+}
+
+void DBMS::intersect(vector<int>& exp1, vector<int>& exp2, vector<int> &index)
 {
 	int exp1_size = exp1.size(), exp2_size = exp2.size();
 	int i = 0, j = 0;
@@ -1288,7 +1368,7 @@ void DBMS::intersect(vector<int> exp1, vector<int> exp2, vector<int> index)
 	}
 }
 
-void DBMS::Union(vector<int> exp1, vector<int> exp2, vector<int> index)
+void DBMS::Union(vector<int>& exp1, vector<int> &exp2, vector<int>& index)
 {
 	int exp1_size = exp1.size(), exp2_size = exp2.size();
 	int i = 0, j = 0;
@@ -1308,6 +1388,14 @@ void DBMS::Union(vector<int> exp1, vector<int> exp2, vector<int> index)
 			j++;
 		}
 	}
+	while(i != exp1_size)
+	{
+		index.push_back(exp1[i++]);
+	}
+	while (j != exp2_size)
+	{
+		index.push_back(exp2[j++]);
+	}
 }
 
 void insert_index(Attribute& target, int index, Value& element)
@@ -1318,6 +1406,8 @@ void insert_index(Attribute& target, int index, Value& element)
 		else
 		{
 			int vectorindex = HashTargetList.size();
+			vector<int> empty;
+			HashTargetList.push_back(empty);
 			StringIndexList[target.indexpos].insert(make_pair(element.val, vectorindex));
 			HashTargetList[vectorindex].push_back(index);
 		}
@@ -1325,8 +1415,10 @@ void insert_index(Attribute& target, int index, Value& element)
 	else if (target.type == _INT)
 	{
 		int intform = atoi(element.val.c_str());
+		//if(target.attr_name=="attr5")cout << target.indexpos<<endl;
 		IntIndexList[target.indexpos].insert(make_pair(intform, index));
 	}
+	//cout << "index number:" << index << " of Attribute:" << target.attr_name << endl;
 }
 
 void select_from_index(Attribute& target, Value& Comparison, OP op, vector<int>& returnvalue)
@@ -1389,21 +1481,24 @@ void select_from_index(Attribute& target, Value& Comparison, OP op, vector<int>&
 		case LESS:
 		{
 			indexrange.second = IntIndexList[target.indexpos].lower_bound(intform);
-			indexrange.second--;
+			//indexrange.second;
 			indexrange.first = IntIndexList[target.indexpos].begin();
 			for (multimap<int, int>::iterator it = indexrange.first; it != indexrange.second; it++)
 			{
 				returnvalue.push_back(it->second);
 			}
+			cout << (indexrange.second)->first << endl;
 			break;
 		}
 		case EQU:
 		{
 			indexrange = IntIndexList[target.indexpos].equal_range(intform);
+			int i = 0;
 			for (multimap<int, int>::iterator it = indexrange.first; it != indexrange.second; it++)
 			{
-				returnvalue.push_back(it->second);
+				returnvalue.push_back(it->second); i++;
 			}
+			//cout << "Equal Range Size " << i << endl;
 			break;
 		}
 		case NEQ:
@@ -1418,6 +1513,14 @@ void select_from_index(Attribute& target, Value& Comparison, OP op, vector<int>&
 		}
 		sort(returnvalue.begin(), returnvalue.end());
 	}
+	/*
+	cout << "index size: " << returnvalue.size() << endl;
+	for (int i = 0; i < returnvalue.size(); i++)
+	{
+		cout << returnvalue[i] << "  ";
+		cout << endl;
+	}
+	*/
 }
 
 

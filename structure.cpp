@@ -59,9 +59,12 @@ void Table::load_data()
 			string str = temp;
 			Value v(attr[j].type, str.substr(0,str.length() -1 ));
 			t.values.push_back(v);
+			
 		}
 		tuples.push_back(t);
 	}
 	fclose(p);
 	//print_table();
 }
+
+

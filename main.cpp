@@ -10,6 +10,8 @@ DBMS dbms;
 #define fileno _fileno
 #include "lex.yy.c"
 using namespace std;
+LARGE_INTEGER tinterval;
+LARGE_INTEGER t1, t2, tc;
 /*
 bool checkValid(string &s)
 {
@@ -113,6 +115,7 @@ int main()
 	cout << "To input a (.sql)file:	input [filename]" << endl;
 	cout << "To input sql lines:	raw\n			[sql codes]\n			end [ctrl+Z]\n" << endl;
 	cout << "To terminate the program:	exit" << endl;
+	QueryPerformanceFrequency(&tc);
 	string command;
 	char type[256] = {};
 	char inputfile[256] = {};
@@ -134,13 +137,13 @@ int main()
 	//dbms.tables[1].print_table();
 	while (true)
 	{
-		
 		//do { getline(cin, command); } while (command.size() == 0 || command[0] == '\n' || command[0] == '\r');
 		getline(cin, command);
 		//cout << command.length() << endl;
 		//cout << command.c_str() << endl;
 		sscanf(command.c_str(), "%s", type);
 		string types = type;
+		QueryPerformanceCounter(&t1);
 		if (types.compare("input") == 0)
 		{
 			sscanf(command.c_str(), "%s %s", type, inputfile);
@@ -185,5 +188,11 @@ int main()
 		{
 			dbms.load_data();
 		}
+		else if (types.compare("index") == 0)
+		{
+			dbms.create_index();
+		}
+		QueryPerformanceCounter(&t2);
+		cout << "Use Time: " << (t2.QuadPart - t1.QuadPart)*1.0 / tc.QuadPart <<"s"<< endl;
 	}
 }
